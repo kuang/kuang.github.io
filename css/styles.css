@@ -76,7 +76,7 @@ h2 {
     font-size: 27px;
 }
 
-*/ @media (max-width: 640px) {
+@media (max-width: 640px) {
     html {
         margin: 0 auto;
         padding: 0;
@@ -91,6 +91,11 @@ h2 {
         height: 60vh;
     }
     #about-me {
-        text-align: center;
+        text-align: justify;
+        margin-top: 20px;
+        margin-left: 40px;
+        margin-right: 40px;
+        margin-bottom: 80px;
+        font-size: 17px;
     }
 }
