@@ -1,5 +1,7 @@
-font-family: 'Verdana', sans-serif;
-font-family: 'Georgia', serif;
+font-family: 'Verdana',
+sans-serif;
+font-family: 'Georgia',
+serif;
 html {
     margin: 0 auto;
     padding: 0;
@@ -14,7 +16,12 @@ body {
     padding-bottom: 60px;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: "Verdana";
 }
 
@@ -23,9 +30,9 @@ p {
 }
 
 #links {
-    /*margin-top: 50px;*/
-    font-size: 27px;
-    background-color: #F8F8F8;
+    margin-top: 55px;
+    /* font-size: 27px; */
+    /* background-color: #F8F8F8; */
 }
 
 #about {
