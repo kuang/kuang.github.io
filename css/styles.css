@@ -70,8 +70,8 @@ h2 {
 }
 
 /* 16x9 Aspect Ratio */
-.intrinsic-container-16x9 {
-  padding-bottom: 56.25%;
+.intrinsic-container-8.5x11 {
+  padding-bottom: 129.412%;
 }
 
 /* 4x3 Aspect Ratio */
