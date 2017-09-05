@@ -1,10 +1,12 @@
 <!doctype html>
 
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
 
-  <title>Jonah</title></title>
+  <title>Jonah</title>
+  </title>
   <meta name="description" content="The HTML5 Herald">
   <meta name="author" content="SitePoint">
 
@@ -20,52 +22,50 @@
 
 <body>
   <script>
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId      : '1343939438983929',
-      xfbml      : true,
-      version    : 'v2.8'
-    });
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId: '1343939438983929',
+        xfbml: true,
+        version: 'v2.8'
+      });
 
-    // *** here is my code ***
-  // if (typeof facebookInit == 'function') {
-  //   myFacebookLogin();
-  //     facebookInit();
-  // }
+      // *** here is my code ***
+      // if (typeof facebookInit == 'function') {
+      //   myFacebookLogin();
+      //     facebookInit();
+      // }
 
-    FB.AppEvents.logPageView();
-
-
-    FB.api(
-    '/44667262131_10153887356512132/comments',
-    'POST',
-    {
-      "message":"hi"
-      // "place":"44667262131",
-      // "tags":["100004639632165"]
-    },
-    function(response) {
-      console.log("posted?");
-    }
-    );
-  };
+      FB.AppEvents.logPageView();
 
 
-
-  (function(d, s, id){
-     var js, fjs = d.getElementsByTagName(s)[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement(s); js.id = id;
-     js.src = "https://connect.facebook.net/en_US/sdk.js";
-     fjs.parentNode.insertBefore(js, fjs);
-   }(document, 'script', 'facebook-jssdk'));
+      FB.api(
+        '/44667262131_10153887356512132/comments',
+        'POST', {
+          "message": "hi"
+          // "place":"44667262131",
+          // "tags":["100004639632165"]
+        },
+        function(response) {
+          console.log("posted?");
+        }
+      );
+    };
 
 
 
+    (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) {
+        return;
+      }
+      js = d.createElement(s);
+      js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+  </script>
 
-</script>
-
-<script src="js/jonahcommenter.js"></script>
+  <script src="js/jonahcommenter.js"></script>
 
 
 
