@@ -1,179 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Justin Kuang is a Cornell University student studying Computer Science and Game Theory."
-    />
+    <meta name="description" content="Justin Kuang's personal site."/>
     <meta name="author" content="Justin Kuang" />
     <meta name="google-site-verification" content="VV6ktlvr7lkd-k4F13kugbHv2HaJF2bMm3_pTbk0xWM" />
-
-
-
     <script type="text/javascript">
-        var host = "justinkuang.com";
-        if (host == window.location.host && window.location.protocol != "https:")
-            window.location.protocol = "https";
+      var host = "justinkuang.com";
+      if (host == window.location.host && window.location.protocol != "https:")
+          window.location.protocol = "https";
     </script>
-
     <link rel="canonical" href="https://justinkuang.com">
-    <link rel="icon" href="images/favicon.ico">
-
+    <link rel="icon" href="favicon.ico">
     <title>Justin Kuang</title>
-
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Verdana|Georgia" rel="stylesheet">
-    <script src="https://use.fontawesome.com/feacc1e8b4.js"></script>
-
-
+    <link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.11/semantic.min.css">
     <script type="application/ld+json">
-        {
-            "@context": "http://schema.org",
-            "@type": "Person",
-            "name": "Justin Kuang",
-            "url": "https://justinkuang.com",
-            "sameAs": [
-                "https://twitter.com/kuangjustin",
-                "https://plus.google.com/104372205310631251117",
-                "https://www.facebook.com/justin.zhiyi.kuang",
-                "https://github.com/kuang",
-                "https://linkedin.com/in/kuangjustin",
-                "https://www.instagram.com/kuangjustin/",
-                "https://www.quora.com/profile/Justin-Kuang-1"
-            ]
-        }
+      {
+          "@context": "http://schema.org",
+          "@type": "Person",
+          "name": "Justin Kuang",
+          "url": "https://justinkuang.com",
+          "sameAs": [
+              "https://twitter.com/kuangjustin",
+              "https://plus.google.com/104372205310631251117",
+              "https://www.facebook.com/justin.zhiyi.kuang",
+              "https://github.com/kuang",
+              "https://linkedin.com/in/kuangjustin",
+              "https://www.instagram.com/kuangjustin/",
+              "https://www.quora.com/profile/Justin-Kuang-1"
+          ]
+      }
     </script>
-
-
-</head>
-
-<body>
-    <ul class="nav navbar-default navbar-fixed-top nav-pills" id="navtop">
-        <li class="active"><a href="index.html">About Me</a></li>
-        <!-- <li><a href="projects.html">Projects</a></li> -->
-        <li><a href="resume.html">Resume</a></li>
-        <li><a href="music.html">My Spotify</a></li>
-
-    </ul>
-    <h1 class="title text-center">
-        <span class="text-blue">Justin </span><span class="show-for-small-screens"></span><span class="text-red">Kuang</span>
-    </h1>
-
-    <div class="row" id="about">
-
-        <div class="col-md-4 text-center">
-            <div class="row">
-                <img id="propic" class="img-circle" src="images/gcc_final.png" alt="Image of Justin Kuang" title="Justin Kuang" />
+  </head>
+  <body>
+    <div class="ui centered middle aligned grid">
+      <div class="row">
+        <div class='ten wide column'>
+          <div class="ui container card">
+            <div class="image"> <img src="justin_kuang.jpg"></div>
+            <div class="content">
+              <div class="header">Justin Kuang</div>
+              <div class="meta">
+                <div id='major'> CS undergrad @ Cornell '20 </div>
+                <div><i class="orange heart icon"></i> Game Theory, Badminton, Chess </div>
+              </div>
             </div>
-
-            <div id="links">
-                <div class="row">
-                    <h3><a href="https://github.com/kuang"><i class="fa fa-github"></i> Github</a></h3>
-
+            <div class="content">
+              <div class="ui small feed">
+                <div class="event">
+                  <div class="content">
+                    <div class="summary">
+                      <i class="uber taxi icon"></i>Future Fall SWE Co-Op @ <a href="https://www.uber.com/">Uber</a>
+                    </div>
+                  </div>
                 </div>
-                <div class="row">
-                    <h3><a href="https://www.linkedin.com/in/kuangjustin"> <i class="fa fa-linkedin"> </i> LinkedIn</a></h3>
-
+                <div class="event">
+                  <div class="content">
+                    <div class="summary"><i class="facebook icon"></i>Future Summer SWE Intern @ <a href="https://www.facebook.com/">Facebook</a></div>
+                  </div>
                 </div>
-                <div class="row" style="padding-bottom:20px">
-                    <h3><a class="no-wrap" href="mailto:zk65@cornell.edu"><i class="fa fa-envelope"></i> zk65@cornell.edu </a></h3>
+                <div class="event">
+                  <div class="content">
+                    <div class="summary"><i class="sabre plane icon"></i>Former Summer SWE Intern @ <a href="https://www.sabre.com/">Sabre</a></div>
+                  </div>
                 </div>
-
+                <!-- <div class="event">
+                  <div class="content">
+                    <div class="summary"><i class="maryland book icon"></i></div>
+                  </div>
+                  </div> -->
+                <div class="event">
+                  <div class="content">
+                    <div class="summary event-text"><i class="bigredhacks signal icon"></i>Director @ <a href='https://bigredhacks.com/'>BigRed//Hacks</a></div>
+                  </div>
+                </div>
+              </div>
             </div>
+            <div class="extra content center aligned">
+              <div class='ui three column grid'>
+                <div class="column"> <a href='https://justinkuang.com/resume/Justin_Kuang_Resume.pdf'><i class="red large file text icon link" ></i></a></div>
+                <div class="column"> <a href='https://github.com/kuang'><i class="purple large github icon link"></i></a></div>
+                <div class="column"> <a href='https://www.linkedin.com/in/kuangjustin/'><i class="blue large linkedin icon link"></i></a></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="col-md-8 text-center">
-            <div class="text-align" id="about-me">
-                <!--<p>
-                    Hi! I'm a freshman currently studying <span class="text-blue">Computer Science</span> with a minor in
-                    <span class="text-blue">Applied Mathematics</span> at <span class="text-red">Cornell University</span>.
-                    I have a major interest in data science, especially in its intersection with operations optimization
-                    in business. I'm exploring these two fields as a member of <span class="text-red"><a href="https://datascience.engineering.cornell.edu/">Cornell Data Science</a></span>                    (check out the "projects" section on my resume!) and as an analyst for
-                    <span class="text-red"><a href="http://www.cornellstrategicconsulting.com/">Cornell Strategic Consulting</a></span>,
-                    in which my subteam is currently doing research and analytics for an early stage tech startup.
-                    </br>
-                    </br>
-                    This summer (2017), I'll be working as a Software Engineering Intern for <span class="text-red"><a href="https://www.sabre.com">Sabre Corporation</a></span>,
-                    North America's largest Global Distribution Systems provider for airline bookings.
-                    </br>
-                    </br>
-                    I'm open to any internship opportunities in software engineering, data science, and business roles for summer or fall 2018.
-                    Feel free to reach out via LinkedIn or my email (zk65@cornell.edu)!
-                </p>-->
-                <p>
-                    Hi! I'm currently an undergrad studying <span class="text-blue">Computer Science</span> (specializing
-                    in
-                    <span class="text-blue">Game Theory</span>) at <span class="text-red">Cornell University</span>. I'm
-                    fascinated by mathematical models for decision-making, especially in how Computer Science can be used
-                    to translate said models into more complex systems for finance, artificial intelligence and other applications
-                    of deep learning. Right now, I'm exploring this field as a member of <span class="text-red"><a href="https://datascience.engineering.cornell.edu/">Cornell Data Science</a></span>                    (check out the "projects" section on my resume!) and as an analyst for <span class="text-red"><a href="http://www.cornellstrategicconsulting.com/">Cornell Strategic Consulting</a></span>,
-                    in which my subteam is currently doing research and analytics for an early stage tech startup.
-                    </br>
-                    </br>
-                    This past summer (2017), I worked as a SWE Intern at <span class="text-red">Sabre Corporation</span>,
-                    North America's largest Global Distribution Systems provider for airline bookings. I was also selected
-                    for and attended the one-week-long <span class="text-red">Capital One</span> Software Engineering Summit.
-
-
-                    </br>
-                    </br>
-                    Outside of computer science, you can probably find me converting my friends to use military time, repping my home state of
-                    Maryland or playing competitive badminton.
-                    </br>
-                    </br>
-                    Feel free to connect via LinkedIn or my email, or check out my Github to see what I've been working on! I'm interested in
-                    internship opportunities in SWE, data science, or business for summer or fall 2018.
-
-
-                </p>
-            </div>
-        </div>
-        <!-- <div class="navbar navbar-fixed-bottom text-center" id="links">
-            <a href="https://github.com/kuang"><i class="fa fa-github"></i> Github</a> &nbsp; &nbsp; &nbsp;
-
-            <a href="https://www.linkedin.com/in/kuangjustin"> <i class="fa fa-linkedin"> </i> LinkedIn</a>&nbsp; &nbsp;
-            &nbsp;
-            <a class="no-wrap" href="mailto:zk65@cornell.edu"><i class="fa fa-envelope"></i> zk65@cornell.edu </a>
-
-
-        </div> -->
-
-
-
-
-        <!-- jQuery Version 1.11.1 -->
-        <script src="js/jquery-3.1.0.min.js"></script>
-
-        <script src="js/bootstrap.min.js"></script>
-        <script>
-            (function (i, s, o, g, r, a, m) {
-                i["GoogleAnalyticsObject"] = r;
-                (i[r] =
-                    i[r] ||
-                    function () {
-                        (i[r].q = i[r].q || []).push(arguments);
-                    }), (i[r].l = 1 * new Date());
-                (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
-                a.async = 1;
-                a.src = g;
-                m.parentNode.insertBefore(a, m);
-            })(
-                window,
-                document,
-                "script",
-                "https://www.google-analytics.com/analytics.js",
-                "ga"
-            );
-
-            ga("create", "UA-81345834-1", "auto");
-            ga("send", "pageview");
-        </script>
-
-</body>
-
-
+      </div>
+    </div>
+    <script>
+      (function (i, s, o, g, r, a, m) {
+          i["GoogleAnalyticsObject"] = r;
+          (i[r] =
+              i[r] ||
+              function () {
+                  (i[r].q = i[r].q || []).push(arguments);
+              }), (i[r].l = 1 * new Date());
+          (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
+          a.async = 1;
+          a.src = g;
+          m.parentNode.insertBefore(a, m);
+      })(
+          window,
+          document,
+          "script",
+          "https://www.google-analytics.com/analytics.js",
+          "ga"
+      );
+      
+      ga("create", "UA-81345834-1", "auto");
+      ga("send", "pageview");
+    </script>
+  </body>
 </html>
-
 </html>
