@@ -1,4 +1,2 @@
-# kuangjustin.github.io
-Personal Site
-
-Check it out at https://justinkuang.com
+# kuang.github.io
+Personal Site- copied this template from my good friend Rex Ledesma, check him out @ https://rexledesma.me
