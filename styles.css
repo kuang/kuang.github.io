@@ -2,8 +2,12 @@ body > .grid {
     height: 100%
 }
 
+
+body {
+    background-color: #D7D7E2 !important
+}
 .uber{
-    color: rgb(0, 0, 0);
+    color: rgb(0, 0, 0)
 }
 .facebook {
     color: #3B5998
@@ -15,8 +19,4 @@ body > .grid {
 
 .bigredhacks {
     color: #B11E22
-}
-
-.maryland {
-    color: #F43A3E
 }
