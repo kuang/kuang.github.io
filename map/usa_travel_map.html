@@ -4,65 +4,65 @@
 <head>
     <meta charset="utf-8">
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <style>
+        .states {
+            fill: none;
+            stroke: black;
+            stroke-linejoin: round;
+        }
+
+        .been-to {
+            fill: rgb(69, 173, 168);
+        }
+    </style>
 </head>
 
 <body>
     <script type="text/javascript">
 
         //Width and height of map
-        var width = 960;
-        var height = 500;
+        const width = 960;
+        const height = 500;
 
         // D3 Projection
-        var projection = d3.geoAlbersUsa()
+        const projection = d3.geoAlbersUsa()
             .translate([width / 2, height / 2])    // translate to center of screen
             .scale([1000]);          // scale things down so see entire US
 
         // Define path generator
-        var path = d3.geoPath()               // path generator that will convert GeoJSON to SVG paths
+        const path = d3.geoPath()     // path generator that will convert GeoJSON to SVG paths
             .projection(projection);  // tell path generator to use albersUsa projection
 
 
-        // Define linear scale for output
-        var color = d3.scaleLinear()
-            .range(["rgb(84,36,55)", "rgb(217,91,67)"]);
-
-        var legendText = ["States Visited", "Nada"];
-
-        //Create SVG element and append map to the SVG
-        var svg = d3.select("body")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height);
-
         const googleSheetsLink = "https://spreadsheets.google.com/feeds/list/1rp9DbKZ6S1XxXAisAy-MPLqzeLyECViiXDl00WouV2g/od6/public/values?alt=json";
-        statesVisited = [];
-        d3.json(googleSheetsLink, function (data) {
-            for (state in data.feed.entry) {
-                // console.log(data.feed.entry[state].gsx$state.$t);
-                statesVisited.push(data.feed.entry[state].gsx$state.$t);
-            }
-            console.log(statesVisited);
+        const usMap = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
+        let statesVisited = [];
+        
+        d3.json(usMap, function (json) {
+            d3.json(googleSheetsLink, function (data) {
+                for (state in data.feed.entry) {
+                    statesVisited.push(data.feed.entry[state].gsx$state.$t);
+                }
+                let svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
 
-            console.log(statesVisited.length);
-
-
-            svg.append("g")
-                .attr("class", "states")
-                .selectAll("path")
-                .data(us_geojson.features)
-                .enter().append("path")
-                .attr("d", path)
-                // .classed('make-it-red', function (d) {
-                //     if (d.properties.name === "Mississippi" || d.properties.name === "Oregon") {
-                //         return true;
-                //     }
-                //     else {
-                //         return false;
-                //     }
-                // })
-
+                svg.append("g")
+                    .attr("class", "states")
+                    .selectAll("path")
+                    .data(json.features)
+                    .enter().append("path")
+                    .attr("d", path)
+                    .classed('been-to', function(d) {
+                        if(statesVisited.includes(d.properties.name)){
+                            return true;
+                        }
+                        return false;
+                    });
+            });
         });
+
     </script>
 </body>
 
