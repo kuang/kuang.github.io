@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
     <style>
         .states {
             fill: none;
@@ -21,13 +21,13 @@
     <script type="text/javascript">
 
         //Width and height of map
-        const width = 960;
-        const height = 500;
+        const width = 1650;
+        const height = 700;
 
         // D3 Projection
         const projection = d3.geoAlbersUsa()
             .translate([width / 2, height / 2])    // translate to center of screen
-            .scale([1000]);          // scale things down so see entire US
+            .scale([1500]);          // scale things down so see entire US
 
         // Define path generator
         const path = d3.geoPath()     // path generator that will convert GeoJSON to SVG paths
@@ -37,12 +37,48 @@
         const googleSheetsLink = "https://spreadsheets.google.com/feeds/list/1rp9DbKZ6S1XxXAisAy-MPLqzeLyECViiXDl00WouV2g/od6/public/values?alt=json";
         const usMap = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
         let statesVisited = [];
-        
-        d3.json(usMap, function (json) {
-            d3.json(googleSheetsLink, function (data) {
-                for (state in data.feed.entry) {
-                    statesVisited.push(data.feed.entry[state].gsx$state.$t);
-                }
+        let schoolsVisited = [];
+
+        let googleMapsAPILink = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
+        let apiKey = '&key=AIzaSyDbNelFfAo3d0dhG82c6B4FsVy5ucW6zjI';
+
+        async function schoolsToCoords(schoolStringList) {
+            const promises = schoolStringList.map(individualSchoolToCoords);
+
+            await Promise.all(promises).then(function (data) {
+                data.forEach(schoolInfo => {
+                    latLongObj = schoolInfo.results[0].geometry.location;
+                    const latLong = [latLongObj.lng, latLongObj.lat];
+                    schoolsVisited.push(latLong);
+                })
+
+            });
+        }
+
+        function individualSchoolToCoords(school) {
+            const gmapsAPISearchString = googleMapsAPILink + school + apiKey;
+            return d3.json(gmapsAPISearchString);
+        }
+
+
+
+    
+        async function loadMap() {
+            let mapData = await d3.json(usMap);
+
+            let statesData = await d3.json(googleSheetsLink);
+            let schoolsVisitedArray = [];
+            // parse spreadsheet data to create array of all schools
+            statesData.feed.entry.forEach(state => {
+                statesVisited.push(state.gsx$state.$t);
+                const schoolsvisitedString = state.gsx$schoolsvisited.$t;
+                const schoolsVisitedInCurrState = schoolsvisitedString.length > 0 ? schoolsvisitedString.split(", ") : [];
+                schoolsVisitedInCurrState.forEach(school => {
+                    schoolsVisitedArray.push(school);
+                });
+            });
+            await schoolsToCoords(schoolsVisitedArray);
+
                 let svg = d3.select("body")
                     .append("svg")
                     .attr("width", width)
@@ -51,17 +87,36 @@
                 svg.append("g")
                     .attr("class", "states")
                     .selectAll("path")
-                    .data(json.features)
+                    .data(mapData.features)
                     .enter().append("path")
                     .attr("d", path)
-                    .classed('been-to', function(d) {
-                        if(statesVisited.includes(d.properties.name)){
+                    .classed('been-to', function (d) {
+                        if (statesVisited.includes(d.properties.name)) {
                             return true;
                         }
                         return false;
                     });
-            });
-        });
+                svg.selectAll("circle")
+                    .data(schoolsVisited).enter()
+                    .append("circle")
+                    .attr("cx", function (d) { return projection(d)[0]; })
+                    .attr("cy", function (d) { return projection(d)[1]; })
+                    .attr("r", "2.5px")
+                    .attr("fill", "black");
+
+                    // work on this later
+                    // .on("mouseover", function (d) {
+                    //     div.transition()
+                    //         .duration(200)
+                    //         .style("opacity", .9);
+                    //     div.text("hello")
+                    //         .style("left", (d3.event.pageX) + "px")
+                    //         .style("top", (d3.event.pageY - 28) + "px");
+                    // });
+
+        }
+
+        loadMap();
 
     </script>
 </body>
