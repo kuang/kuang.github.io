@@ -24,7 +24,7 @@
         }
 
         .been-to {
-             fill: salmon;
+            fill: salmon;
         }
     </style>
 </head>
@@ -60,14 +60,18 @@
         async function schoolsToCoords(schoolStringList) {
             const promises = schoolStringList.map(individualSchoolToCoords);
 
-            await Promise.all(promises).then(function (data) {
-                for (let i = 0; i < data.length; i++) {
-                    latLongObj = data[i].results[0].geometry.location;
-                    const loc = [latLongObj.lng, latLongObj.lat];
-                    schoolsVisited.push(loc);
-                    schoolsLocationMap[latLongObj.lng + latLongObj.lat] = schoolStringList[i];
-                }
-            });
+            await Promise.all(promises)
+                .then(function (data) {
+                    for (let i = 0; i < data.length; i++) {
+                        latLongObj = data[i].results[0].geometry.location;
+                        const loc = [latLongObj.lng, latLongObj.lat];
+                        schoolsVisited.push(loc);
+                        schoolsLocationMap[latLongObj.lng + latLongObj.lat] = schoolStringList[i];
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
         }
 
         function individualSchoolToCoords(school) {
