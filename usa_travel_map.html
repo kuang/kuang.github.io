@@ -59,10 +59,10 @@
 
         async function schoolsToCoords(schoolStringList) {
             const promises = schoolStringList.map(individualSchoolToCoords);
-
             await Promise.all(promises)
                 .then(function (data) {
                     for (let i = 0; i < data.length; i++) {
+                        console.log(data[i]);
                         latLongObj = data[i].results[0].geometry.location;
                         const loc = [latLongObj.lng, latLongObj.lat];
                         schoolsVisited.push(loc);
@@ -98,7 +98,7 @@
                     schoolsVisitedArray.push(school);
                 });
             });
-            await schoolsToCoords(schoolsVisitedArray);
+            
             d3.select('body')
                 .append('div')
                 .attr('id', 'tooltip')
@@ -117,6 +117,9 @@
                 .classed('been-to', function (d) {
                     return statesVisited.includes(d.properties.name)
                 });
+
+            await schoolsToCoords(schoolsVisitedArray);
+
             svg.selectAll("circle")
                 .data(schoolsVisited).enter()
                 .append("circle")
