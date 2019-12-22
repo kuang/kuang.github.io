@@ -1,44 +1,52 @@
-<h1>Reading:</h1>
-<p>
-    Homo Deus: A Brief History of Tomorrow (Yuval Noah Harari)
-    </br>
-    The Design of Everyday Things (Don Norman)
-    </br>
+<!DOCTYPE html>
+<html lang="en">
 
-</p>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
 
-<h1>Done:</h1>
-<p>
-    Measure What Matters (John Doerr)
-    </br>
-    Sapiens: A Brief History of Humankind (Yuval Noah Harari)
-    </br>
-    Evicted (Matthew Desmond)
-    </br>
-    The Hard Thing About Hard Things (Ben Horowitz)
-    </br>
-    Zero to One (Peter Thiel)
-    </br>
-    What We Were Promised (Lucy Tan)
-    </br>
-    cc <a href="https://medium.com/s/story/this-is-not-my-fathers-china-1cda235923f7">this is not my father's china</a>
-    </br>
-    Freakonomics (Stephen Dubner, Steven Levitt)
-    </br>
-</p>
+<body>
+    <script type="text/javascript">
+        readingList = [];
+        finishedList = [];
+        laterList = [];
 
-<h1>Wishlist:</h1>
-<p>
-    21 Lessons for the 21st Century (Yuval Noah Harari)
-    </br>
-    Algorithms to Live By (Brian Christian, Tom Griffiths)
-    </br>
-    Radical Markets (Eric Posner, Glen Weyl)
-    </br>
-    Barbarians at the Gate (Bryan Burrough, John Helyar)
-    </br>
-    Flash Boys (Michael Lewis)
-    </br>
-    Educated: A Memoir (Tara Westover)
-    </br>
-</p>
+        spreadsheetUrl = "https://spreadsheets.google.com/feeds/list/1zTkOrJJb_Rd9MSWisq_hn9LxQil2e2v_LMFgxGcP1q0/od6/public/values?alt=json";
+
+        $.get(spreadsheetUrl, function (data) {
+            data = data.feed.entry;
+            data.forEach(row => {
+                reading = row.gsx$reading.$t;
+                finished = row.gsx$finished.$t;
+                later = row.gsx$later.$t;
+
+                if (reading != "") readingList.push(reading);
+                if (finished != "") finishedList.push(finished);
+                if (later != "") laterList.push(later);
+            });
+
+            finishedList.sort().reverse();
+            readingList.sort().reverse();
+            laterList.sort().reverse();
+
+            readingList.forEach(book => {
+                $("#reading").after("<p>" + book + "</p>");
+            });
+            finishedList.forEach(book => {
+                $("#finished").after("<p>" + book + "</p>");
+            });
+
+            laterList.forEach(book => {
+                $("#later").after("<p>" + book + "</p>");
+            });
+        });
+    </script>
+    <div style="padding: 24px">
+        <h1 id="reading">Present:</h1>
+        <h1 id="finished">Past:</h1>
+        <h1 id="later">Future:</h1>
+    </div>
+</body>
+
+</html>
