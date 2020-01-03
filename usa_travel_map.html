@@ -16,10 +16,10 @@
             pointer-events: none;
             opacity: 0;
         }
-        
-        #info {
-            margin: 20px;
-            font: 30px sans-serif;
+
+        .info {
+            margin: 50px;
+            font: 20px sans-serif;
         }
 
         .states {
@@ -31,7 +31,6 @@
         .been-to {
             fill: salmon;
         }
-    
     </style>
 </head>
 
@@ -55,24 +54,25 @@
         const googleSheetsLink = "https://spreadsheets.google.com/feeds/list/1rp9DbKZ6S1XxXAisAy-MPLqzeLyECViiXDl00WouV2g/od6/public/values?alt=json";
         const usMap = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
         let statesVisited = [];
-        let schoolsVisited = [];
-        let schoolsLocationMap = {};
+        let placesVisitedLocations = [];
+        let placesVisitedArray = [];
+
+        let locMap = {};
 
         let googleMapsAPILink = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
 
         // please don't steal my API key- too lazy to hide t
         let apiKey = '&key=AIzaSyDbNelFfAo3d0dhG82c6B4FsVy5ucW6zjI';
 
-        async function schoolsToCoords(schoolStringList) {
-            const promises = schoolStringList.map(individualSchoolToCoords);
+        async function placesToCoords(placesList) {
+            const promises = placesList.map(individualPlaceToCoords);
             await Promise.all(promises)
                 .then(function (data) {
                     for (let i = 0; i < data.length; i++) {
-                        console.log(data[i]);
                         latLongObj = data[i].results[0].geometry.location;
                         const loc = [latLongObj.lng, latLongObj.lat];
-                        schoolsVisited.push(loc);
-                        schoolsLocationMap[latLongObj.lng + latLongObj.lat] = schoolStringList[i];
+                        placesVisitedLocations.push(loc);
+                        locMap[latLongObj.lng + latLongObj.lat] = placesList[i].name;
                     }
                 })
                 .catch(function (error) {
@@ -80,31 +80,47 @@
                 });
         }
 
-        function individualSchoolToCoords(school) {
-            const gmapsAPISearchString = googleMapsAPILink + school + apiKey;
+        function individualPlaceToCoords(place) {
+            const gmapsAPISearchString = googleMapsAPILink + place.name + apiKey;
             return d3.json(gmapsAPISearchString);
         }
 
-        function getSchoolNameFromCoords(coords) {
+        function getNameFromCoords(coords) {
             const hash = coords[0] + coords[1];
-            return schoolsLocationMap[hash];
+            return locMap[hash];
+        }
+
+
+        function getColorFromCoords(coords) {
+            const name = getNameFromCoords(coords);
+            const matchingPlace = placesVisitedArray.find(place => place.name == name);
+            if (matchingPlace.type == "school") {
+                return "blue";
+            }
+            return "green";
         }
 
         async function loadMap() {
             let mapData = await d3.json(usMap);
             let statesData = await d3.json(googleSheetsLink);
-            let schoolsVisitedArray = [];
 
-            // parse spreadsheet data to create array of all schools
+            // parse spreadsheet data to create array of all places
             statesData.feed.entry.forEach(state => {
                 statesVisited.push(state.gsx$state.$t);
                 const schoolsvisitedString = state.gsx$schoolsvisited.$t;
+                const npsvisitedString = state.gsx$nationalparksvisited.$t;
+
                 const schoolsVisitedInCurrState = schoolsvisitedString.length > 0 ? schoolsvisitedString.split(", ") : [];
+                const npsVisitedInCurrState = npsvisitedString.length > 0 ? npsvisitedString.split(", ") : [];
+
                 schoolsVisitedInCurrState.forEach(school => {
-                    schoolsVisitedArray.push(school);
+                    placesVisitedArray.push({ "name": school, "type": "school" });
+                });
+                npsVisitedInCurrState.forEach(nps => {
+                    placesVisitedArray.push({ "name": nps, "type": "national park" });
                 });
             });
-            
+
             d3.select('body')
                 .append('div')
                 .attr('id', 'tooltip')
@@ -124,17 +140,19 @@
                     return statesVisited.includes(d.properties.name)
                 });
 
-            await schoolsToCoords(schoolsVisitedArray);
+            await placesToCoords(placesVisitedArray);
 
             svg.selectAll("circle")
-                .data(schoolsVisited).enter()
+                .data(placesVisitedLocations).enter()
                 .append("circle")
                 .attr("cx", function (d) { return projection(d)[0]; })
                 .attr("cy", function (d) { return projection(d)[1]; })
                 .attr("r", "4.5px")
-                .attr("fill", "blue")
+                .attr("fill", function (d) {
+                    return getColorFromCoords(d);
+                })
                 .on('mouseover', function (d) {
-                    d3.select('#tooltip').style('opacity', 1).text(getSchoolNameFromCoords(d))
+                    d3.select('#tooltip').style('opacity', 1).text(getNameFromCoords(d))
                 })
                 .on('mousemove', function () {
                     d3.select('#tooltip')
@@ -144,9 +162,13 @@
                 .on('mouseout', function () {
                     d3.select('#tooltip').style('opacity', 0)
                 });
-            
-            const infoText = "States visited: "+statesVisited.length + "</br> Schools visited: "+ schoolsVisited.length;
-            document.getElementById("info").innerHTML = infoText;
+
+            const numschools = placesVisitedArray.filter(place => place.type == "school").length;
+            const infoText =
+                "States visited: " + statesVisited.length +
+                "</br> Colleges visited: " + numschools +
+                "</br> National Parks visited: " + (placesVisitedArray.length - numschools);
+            document.getElementById("numbers").innerHTML = infoText;
 
         }
 
@@ -154,7 +176,8 @@
 
     </script>
     <div id="map"></div>
-    <div id="info"></div>
+    <div class="info">Hooked up to a Google spreadsheet I use to keep track of previous travels. I collect shot glasses from colleges that I've visited, hence the documentation</div>
+    <div class="info" id = "numbers"></div>
 </body>
 
 </html>
