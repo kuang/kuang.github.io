@@ -38,8 +38,8 @@
     <script type="text/javascript">
 
         //Width and height of map
-        const width = 1650;
-        const height = 700;
+        const width = 1280;
+        const height = 720;
 
         // D3 Projection
         const projection = d3.geoAlbersUsa()
@@ -169,6 +169,7 @@
                 "</br> Colleges visited: " + numschools +
                 "</br> National Parks visited: " + (placesVisitedArray.length - numschools);
             document.getElementById("numbers").innerHTML = infoText;
+            document.getElementById("caption").innerHTML = "Hooked up to a Google spreadsheet I use to keep track of previous travel. I collect shot glasses from colleges that I've visited, hence the documentation";
 
         }
 
@@ -176,8 +177,8 @@
 
     </script>
     <div id="map"></div>
-    <div class="info">Hooked up to a Google spreadsheet I use to keep track of previous travel. I collect shot glasses from colleges that I've visited, hence the documentation</div>
-    <div class="info" id = "numbers"></div>
+    <div class="info" id="caption"></div>
+    <div class="info" id="numbers"></div>
 </body>
 
 </html>
