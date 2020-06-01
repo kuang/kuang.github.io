@@ -5,48 +5,115 @@
     <meta charset="utf-8">
     <title>Books</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <style>
+        table,
+        th {
+            border: 1px solid black;
+            padding: 15px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 1600px;
+        }
+
+        .title {
+            min-width: 200px;
+            width: 200px;
+            max-width: 200px;
+        }
+
+        .author {
+            min-width: 200px;
+            width: 200px;
+            max-width: 200px;
+        }
+
+        .year_read {
+            min-width: 50px;
+            width: 50px;
+            max-width: 50px;
+        }
+
+        .notes {
+            min-width: 800px;
+            width: 800px;
+            max-width: 800px;
+        }
+
+        .tags {
+            min-width: 50px;
+            width: 50px;
+            max-width: 50px;
+        }
+
+        table td {
+            border: 1px solid #000;
+        }
+
+
+        td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
     <script type="text/javascript">
+
+        function linkify(inputText) {
+            var replacedText, replacePattern1, replacePattern2, replacePattern3;
+
+            //URLs starting with http://, https://, or ftp://
+            replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+            replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+
+            //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+            replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+            replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+
+            return replacedText;
+        }
+
         readingList = [];
         finishedList = [];
         laterList = [];
-
-        spreadsheetUrl = "https://spreadsheets.google.com/feeds/list/1zTkOrJJb_Rd9MSWisq_hn9LxQil2e2v_LMFgxGcP1q0/od6/public/values?alt=json";
+        test_note = "";
+        spreadsheetUrl = "https://spreadsheets.google.com/feeds/list/1YR5jwSTN6AENc8fOWejP9w2v1yneNX8E29_3W42ZGDY/od6/public/values?alt=json";
 
         $.get(spreadsheetUrl, function (data) {
             data = data.feed.entry;
             data.forEach(row => {
-                reading = row.gsx$reading.$t;
-                finished = row.gsx$finished.$t;
-                later = row.gsx$later.$t;
 
-                if (reading != "") readingList.push(reading);
-                if (finished != "") finishedList.push(finished);
-                if (later != "") laterList.push(later);
-            });
+                let table = $('table');
 
-            finishedList.sort().reverse();
-            readingList.sort().reverse();
-            laterList.sort().reverse();
+                let notes = linkify(row.gsx$notes.$t);
 
-            readingList.forEach(book => {
-                $("#reading").after("<p>" + book + "</p>");
-            });
-            finishedList.forEach(book => {
-                $("#finished").after("<p>" + book + "</p>");
-            });
 
-            laterList.forEach(book => {
-                $("#later").after("<p>" + book + "</p>");
+                let row_info = "<tr>";
+                row_info += "<td>" + row.gsx$title.$t + "</td>";
+                row_info += "<td>" + row.gsx$author.$t + "</td>";
+                row_info += "<td>" + row.gsx$yearread.$t + "</td>";
+                row_info += "<td>" + notes + "</td>";
+                row_info += "<td>" + row.gsx$tags.$t + "</td>";
+
+                row_info += "</tr>";
+                table.append(row_info);
+
             });
         });
     </script>
     <div style="padding: 24px">
-        <h1 id="reading">Present:</h1>
-        <h1 id="finished">Past:</h1>
-        <h1 id="later">Future:</h1>
+        <table id="book_table">
+            <tr>
+                <th class="title">Title</th>
+                <th class="author">Author</th>
+                <th class="year_read">Year Read</th>
+                <th class="notes">Notes</th>
+                <th class="tags">Tags</th>
+            </tr>
+        </table>
     </div>
 </body>
 
