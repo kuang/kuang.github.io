@@ -54,7 +54,7 @@
 
         td {
             padding: 10px;
-            text-align: center;
+            text-align: left;
         }
     </style>
 </head>
@@ -68,18 +68,19 @@
             //URLs starting with http://, https://, or ftp://
             replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
             replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
-
+            
             //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
             replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
             replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
 
+            replacePattern3 = /(>>>)/gim;
+            replacedText = replacedText.replace(replacePattern3, '</br></br>');
             return replacedText;
         }
 
         readingList = [];
         finishedList = [];
         laterList = [];
-        test_note = "";
         spreadsheetUrl = "https://spreadsheets.google.com/feeds/list/1YR5jwSTN6AENc8fOWejP9w2v1yneNX8E29_3W42ZGDY/od6/public/values?alt=json";
 
         $.get(spreadsheetUrl, function (data) {
