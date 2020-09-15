@@ -69,7 +69,6 @@
             const promises = placesList.map(individualPlaceToCoords);
             await Promise.all(promises)
                 .then(function (data) {
-                    console.log(data);
                     for (let i = 0; i < data.length; i++) {
                         latLongObj = data[i].results[0].geometry.location;
                         const loc = [latLongObj.lng, latLongObj.lat];
