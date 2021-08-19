@@ -52,7 +52,8 @@
             .projection(projection);  // tell path generator to use albersUsa projection
 
 
-        const googleSheetsLink = "https://spreadsheets.google.com/feeds/list/1rp9DbKZ6S1XxXAisAy-MPLqzeLyECViiXDl00WouV2g/od6/public/values?alt=json";
+        const googleSheetsLink = "https://sheets.googleapis.com/v4/spreadsheets/1rp9DbKZ6S1XxXAisAy-MPLqzeLyECViiXDl00WouV2g/values/Sheet1?key=AIzaSyDHFE1H6dDiIKz6tILi0lGE3FeKdH0ZapA";
+
         const usMap = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
         let statesVisited = [];
         let placesVisitedLocations = [];
@@ -103,13 +104,18 @@
 
         async function loadMap() {
             let mapData = await d3.json(usMap);
+
+            // ["State", "Schools Visited", "National Parks Visited"]
             let statesData = await d3.json(googleSheetsLink);
 
+            // remove first from array
+            statesData.values.shift();
+
             // parse spreadsheet data to create array of all places
-            statesData.feed.entry.forEach(state => {
-                statesVisited.push(state.gsx$state.$t);
-                const schoolsvisitedString = state.gsx$schoolsvisited.$t;
-                const npsvisitedString = state.gsx$nationalparksvisited.$t;
+            statesData.values.forEach(state => {
+                statesVisited.push(state[0]);
+                const schoolsvisitedString = state[1] || '';
+                const npsvisitedString = state[2] || '';
 
                 const schoolsVisitedInCurrState = schoolsvisitedString.length > 0 ? schoolsvisitedString.split(", ") : [];
                 const npsVisitedInCurrState = npsvisitedString.length > 0 ? npsvisitedString.split(", ") : [];

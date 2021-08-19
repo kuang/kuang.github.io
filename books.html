@@ -64,7 +64,7 @@
 
         function linkify(inputText) {
             var replacedText, replacePattern1, replacePattern2, replacePattern3;
-
+            if(!inputText) return '';
             //URLs starting with http://, https://, or ftp://
             replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
             replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
@@ -81,23 +81,26 @@
         readingList = [];
         finishedList = [];
         laterList = [];
-        spreadsheetUrl = "https://spreadsheets.google.com/feeds/list/1YR5jwSTN6AENc8fOWejP9w2v1yneNX8E29_3W42ZGDY/od6/public/values?alt=json";
+        spreadsheetUrl = "https://sheets.googleapis.com/v4/spreadsheets/1YR5jwSTN6AENc8fOWejP9w2v1yneNX8E29_3W42ZGDY/values/Sheet1?key=AIzaSyDHFE1H6dDiIKz6tILi0lGE3FeKdH0ZapA";
 
         $.get(spreadsheetUrl, function (data) {
-            data = data.feed.entry;
+            data = data.values;
+            data.shift();
+
+            // ["Order", "Title", "Author", "Year Read", "Notes", "Tags"]
             data.forEach(row => {
 
                 let table = $('table');
 
-                let notes = linkify(row.gsx$notes.$t);
+                let notes = linkify(row[4]);
 
 
                 let row_info = "<tr>";
-                row_info += "<td>" + row.gsx$title.$t + "</td>";
-                row_info += "<td>" + row.gsx$author.$t + "</td>";
-                row_info += "<td>" + row.gsx$yearread.$t + "</td>";
+                row_info += "<td>" + row[1] + "</td>";
+                row_info += "<td>" + row[2] + "</td>";
+                row_info += "<td>" + row[3] + "</td>";
                 row_info += "<td>" + notes + "</td>";
-                row_info += "<td>" + row.gsx$tags.$t + "</td>";
+                row_info += "<td>" + row[5] + "</td>";
 
                 row_info += "</tr>";
                 table.append(row_info);
