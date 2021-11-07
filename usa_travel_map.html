@@ -44,7 +44,7 @@
 
         // D3 Projection
         const projection = d3.geoAlbersUsa()
-            .translate([width /2.3, height / 2])    // translate to center of screen
+            .translate([width / 2.3, height / 2])    // translate to center of screen
             .scale([1200]);          // scale things down so see entire US
 
         // Define path generator
@@ -67,16 +67,35 @@
         let apiKey = '&key=AIzaSyDHFE1H6dDiIKz6tILi0lGE3FeKdH0ZapA';
 
         async function placesToCoords(placesList) {
-            const promises = placesList.map(individualPlaceToCoords);
+            let places_not_cached = [];
+            for (let i = 0; i < placesList.length; i++) {
+                const curr_place = placesList[i];
+                if (localStorage.getItem(curr_place.name) !== null) {
+                    const coord = JSON.parse(localStorage.getItem(curr_place.name));
+
+                    placesVisitedLocations.push(coord);
+                    locMap[coord[0] + coord[1]] = curr_place.name;
+
+                }
+                else {
+                    places_not_cached.push(curr_place);
+                }
+
+            }
+
+            const promises = places_not_cached.map(individualPlaceToCoords);
             await Promise.all(promises)
                 .then(function (data) {
-                    console.log('data');
-                    console.log(data);
                     for (let i = 0; i < data.length; i++) {
-                        latLongObj = data[i].results[0].geometry.location;
-                        const loc = [latLongObj.lng, latLongObj.lat];
-                        placesVisitedLocations.push(loc);
-                        locMap[latLongObj.lng + latLongObj.lat] = placesList[i].name;
+
+                        if (data[i].results) {
+                            latLongObj = data[i].results[0].geometry.location;
+                            const loc = [latLongObj.lng, latLongObj.lat];
+                            placesVisitedLocations.push(loc);
+                            locMap[latLongObj.lng + latLongObj.lat] = places_not_cached[i].name;
+
+                            localStorage.setItem(places_not_cached[i].name, JSON.stringify(loc));
+                        }
                     }
                 })
                 .catch(function (error) {
