@@ -74,7 +74,7 @@
                     const coord = JSON.parse(localStorage.getItem(place.name));
 
                     placesVisitedLocations.push(coord);
-                    locMap[coord[0] + coord[1]] = curr_place.name;
+                    locMap[coord[0] + coord[1]] = place.name;
                 }
                 else {
                     places_not_cached.push(place);
