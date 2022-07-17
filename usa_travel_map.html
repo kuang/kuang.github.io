@@ -87,7 +87,7 @@
                 .then(function (data) {
                     for (const place of data) {
 
-                        if (place.results && places.results.length > 0) {
+                        if (place.results && place.results.length > 0) {
                             latLongObj = place.results[0].geometry.location;
                             const loc = [latLongObj.lng, latLongObj.lat];
                             placesVisitedLocations.push(loc);
