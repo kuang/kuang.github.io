@@ -91,9 +91,9 @@
                             latLongObj = place.results[0].geometry.location;
                             const loc = [latLongObj.lng, latLongObj.lat];
                             placesVisitedLocations.push(loc);
-                            locMap[latLongObj.lng + latLongObj.lat] = places_not_cached[i].name;
+                            locMap[latLongObj.lng + latLongObj.lat] = place.name;
 
-                            localStorage.setItem(places_not_cached[i].name, JSON.stringify(loc));
+                            localStorage.setItem(place.name, JSON.stringify(loc));
                         } else {
                             console.log(`no data found for ${JSON.stringify(place)}`);
                         }
