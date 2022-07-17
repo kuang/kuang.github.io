@@ -68,18 +68,16 @@
 
         async function placesToCoords(placesList) {
             let places_not_cached = [];
-            for (let i = 0; i < placesList.length; i++) {
-                const curr_place = placesList[i];
-                if (localStorage.getItem(curr_place.name) !== null) {
-                    console.log('found in storage: ' + curr_place.name);
-                    const coord = JSON.parse(localStorage.getItem(curr_place.name));
+            for (const place of placesList) {
+                if (localStorage.getItem(place.name) !== null) {
+                    console.log('found in storage: ' + place.name);
+                    const coord = JSON.parse(localStorage.getItem(place.name));
 
                     placesVisitedLocations.push(coord);
                     locMap[coord[0] + coord[1]] = curr_place.name;
-
                 }
                 else {
-                    places_not_cached.push(curr_place);
+                    places_not_cached.push(place);
                 }
 
             }
@@ -87,15 +85,17 @@
             const promises = places_not_cached.map(individualPlaceToCoords);
             await Promise.all(promises)
                 .then(function (data) {
-                    for (let i = 0; i < data.length; i++) {
+                    for (const place of data) {
 
-                        if (data[i].results) {
-                            latLongObj = data[i].results[0].geometry.location;
+                        if (place.results && places.results.length > 0) {
+                            latLongObj = place.results[0].geometry.location;
                             const loc = [latLongObj.lng, latLongObj.lat];
                             placesVisitedLocations.push(loc);
                             locMap[latLongObj.lng + latLongObj.lat] = places_not_cached[i].name;
 
                             localStorage.setItem(places_not_cached[i].name, JSON.stringify(loc));
+                        } else {
+                            console.log(`no data found for ${JSON.stringify(place)}`);
                         }
                     }
                 })
