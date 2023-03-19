@@ -1,213 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <title>Travel Map</title>
+  <head>
+    <meta charset="utf-8" />
+    <title>Travel</title>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <style>
-        #tooltip {
-            position: absolute;
-            text-align: center;
-            padding: 5px;
-            font: 14px sans-serif;
-            background: lightsteelblue;
-            border: 0px;
-            border-radius: 8px;
-            pointer-events: none;
-            opacity: 0;
-        }
+      #tooltip {
+        position: absolute;
+        text-align: center;
+        padding: 5px;
+        font: 14px sans-serif;
+        background: lightsteelblue;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+        opacity: 0;
+      }
 
-        .info {
-            margin: 50px;
-            font: 20px sans-serif;
-        }
+      .info {
+        margin: 20px;
+      }
 
-        .states {
-            fill: none;
-            stroke: black;
-            stroke-linejoin: round;
-        }
+      .states {
+        fill: none;
+        stroke: black;
+        stroke-linejoin: round;
+      }
 
-        .been-to {
-            fill: salmon;
-        }
+      .been-to {
+        fill: salmon;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <script type="text/javascript">
+      //Width and height of map
+      const width = 1280;
+      const height = 580;
 
-        //Width and height of map
-        const width = 1280;
-        const height = 580;
+      // D3 Projection
+      const projection = d3
+        .geoAlbersUsa()
+        .translate([width / 2.3, height / 2]) // translate to center of screen
+        .scale([1000]); // scale things down so see entire US
 
-        // D3 Projection
-        const projection = d3.geoAlbersUsa()
-            .translate([width / 2.3, height / 2])    // translate to center of screen
-            .scale([1200]);          // scale things down so see entire US
+      // Define path generator
+      const path = d3
+        .geoPath() // path generator that will convert GeoJSON to SVG paths
+        .projection(projection); // tell path generator to use albersUsa projection
 
-        // Define path generator
-        const path = d3.geoPath()     // path generator that will convert GeoJSON to SVG paths
-            .projection(projection);  // tell path generator to use albersUsa projection
+      const googleSheetsLink =
+        "https://sheets.googleapis.com/v4/spreadsheets/1rp9DbKZ6S1XxXAisAy-MPLqzeLyECViiXDl00WouV2g/values/Sheet1?key=AIzaSyDHFE1H6dDiIKz6tILi0lGE3FeKdH0ZapA";
 
+      const usMap =
+        "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
+      let statesVisited = [];
+      let placesVisitedLocations = [];
+      let placesVisitedArray = [];
 
-        const googleSheetsLink = "https://sheets.googleapis.com/v4/spreadsheets/1rp9DbKZ6S1XxXAisAy-MPLqzeLyECViiXDl00WouV2g/values/Sheet1?key=AIzaSyDHFE1H6dDiIKz6tILi0lGE3FeKdH0ZapA";
+      let locMap = {};
+      let googleMapsAPILink =
+        "https://maps.googleapis.com/maps/api/geocode/json?address=";
 
-        const usMap = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
-        let statesVisited = [];
-        let placesVisitedLocations = [];
-        let placesVisitedArray = [];
+      // please don't steal my API key- too lazy to hide it
+      let apiKey = "&key=AIzaSyDHFE1H6dDiIKz6tILi0lGE3FeKdH0ZapA";
 
-        let locMap = {};
-        let googleMapsAPILink = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
+      async function placesToCoords(placesList) {
+        let places_not_cached = [];
+        for (const place of placesList) {
+          if (localStorage.getItem(place.name) !== null) {
+            console.log("found in storage: " + place.name);
+            const coord = JSON.parse(localStorage.getItem(place.name));
 
-        // please don't steal my API key- too lazy to hide it
-        let apiKey = '&key=AIzaSyDHFE1H6dDiIKz6tILi0lGE3FeKdH0ZapA';
+            placesVisitedLocations.push(coord);
+            locMap[coord[0] + coord[1]] = place.name;
+          } else {
+            places_not_cached.push(place);
+          }
+        }
+        console.log(
+          `number cached: ${placesList.length - places_not_cached.length}`
+        );
 
-        async function placesToCoords(placesList) {
-            let places_not_cached = [];
-            for (const place of placesList) {
-                if (localStorage.getItem(place.name) !== null) {
-                    console.log('found in storage: ' + place.name);
-                    const coord = JSON.parse(localStorage.getItem(place.name));
+        const promises = places_not_cached.map(individualPlaceToCoords);
+        await Promise.all(promises)
+          .then(function (data) {
+            for (const [i, place] of data.entries()) {
+              if (place.status == "OK") {
+                latLongObj = place.results[0].geometry.location;
+                const loc = [latLongObj.lng, latLongObj.lat];
+                placesVisitedLocations.push(loc);
+                locMap[latLongObj.lng + latLongObj.lat] = placesList[i].name;
 
-                    placesVisitedLocations.push(coord);
-                    locMap[coord[0] + coord[1]] = place.name;
-                }
-                else {
-                    places_not_cached.push(place);
-                }
+                localStorage.setItem(place.name, JSON.stringify(loc));
+              } else {
+                console.log(
+                  `no data found for ${JSON.stringify(placesList[i].name)}`
+                );
+              }
             }
-            console.log(`number cached: ${placesList.length - places_not_cached.length}`);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+      }
 
-            const promises = places_not_cached.map(individualPlaceToCoords);
-            await Promise.all(promises)
-                .then(function (data) {
-                    for (const [i, place] of data.entries()) {
-                        if (place.status == 'OK') {
-                            latLongObj = place.results[0].geometry.location;
-                            const loc = [latLongObj.lng, latLongObj.lat];
-                            placesVisitedLocations.push(loc);
-                            locMap[latLongObj.lng + latLongObj.lat] = placesList[i].name;
+      function individualPlaceToCoords(place) {
+        const gmapsAPISearchString = googleMapsAPILink + place.name + apiKey;
+        return d3.json(gmapsAPISearchString);
+      }
 
-                            localStorage.setItem(place.name, JSON.stringify(loc));
-                        }
-                        else {
-                            console.log(`no data found for ${JSON.stringify(placesList[i].name)}`);
-                        }
-                    }
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
+      function getNameFromCoords(coords) {
+        const hash = coords[0] + coords[1];
+        return locMap[hash];
+      }
+
+      function getColorFromCoords(coords) {
+        const name = getNameFromCoords(coords);
+        const matchingPlace = placesVisitedArray.find(
+          (place) => place.name == name
+        );
+        if (matchingPlace.type == "school") {
+          return "blue";
         }
+        return "green";
+      }
 
-        function individualPlaceToCoords(place) {
-            const gmapsAPISearchString = googleMapsAPILink + place.name + apiKey;
-            return d3.json(gmapsAPISearchString);
-        }
+      async function loadMap() {
+        let mapData = await d3.json(usMap);
 
-        function getNameFromCoords(coords) {
-            const hash = coords[0] + coords[1];
-            return locMap[hash];
-        }
+        // ["State", "Schools Visited", "National Parks Visited"]
+        let statesData = await d3.json(googleSheetsLink);
 
+        // remove first from array
+        statesData.values.shift();
 
-        function getColorFromCoords(coords) {
-            const name = getNameFromCoords(coords);
-            const matchingPlace = placesVisitedArray.find(place => place.name == name);
-            if (matchingPlace.type == "school") {
-                return "blue";
-            }
-            return "green";
-        }
+        // parse spreadsheet data to create array of all places
+        statesData.values.forEach((state) => {
+          statesVisited.push(state[0]);
+          const schoolsvisitedString = state[1] || "";
+          const npsvisitedString = state[2] || "";
 
-        async function loadMap() {
-            let mapData = await d3.json(usMap);
+          const schoolsVisitedInCurrState =
+            schoolsvisitedString.length > 0
+              ? schoolsvisitedString.split(", ")
+              : [];
+          const npsVisitedInCurrState =
+            npsvisitedString.length > 0 ? npsvisitedString.split(", ") : [];
 
-            // ["State", "Schools Visited", "National Parks Visited"]
-            let statesData = await d3.json(googleSheetsLink);
+          schoolsVisitedInCurrState.forEach((school) => {
+            placesVisitedArray.push({ name: school, type: "school" });
+          });
+          npsVisitedInCurrState.forEach((nps) => {
+            placesVisitedArray.push({ name: nps, type: "national park" });
+          });
+        });
 
-            // remove first from array
-            statesData.values.shift();
+        d3.select("body").append("div").attr("id", "tooltip");
 
+        let svg = d3
+          .select("div#map")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height);
 
-            // parse spreadsheet data to create array of all places
-            statesData.values.forEach(state => {
-                statesVisited.push(state[0]);
-                const schoolsvisitedString = state[1] || '';
-                const npsvisitedString = state[2] || '';
+        svg
+          .append("g")
+          .attr("class", "states")
+          .selectAll("path")
+          .data(mapData.features)
+          .enter()
+          .append("path")
+          .attr("d", path)
+          .classed("been-to", function (d) {
+            return statesVisited.includes(d.properties.name);
+          });
 
-                const schoolsVisitedInCurrState = schoolsvisitedString.length > 0 ? schoolsvisitedString.split(", ") : [];
-                const npsVisitedInCurrState = npsvisitedString.length > 0 ? npsvisitedString.split(", ") : [];
+        await placesToCoords(placesVisitedArray);
 
-                schoolsVisitedInCurrState.forEach(school => {
-                    placesVisitedArray.push({ "name": school, "type": "school" });
-                });
-                npsVisitedInCurrState.forEach(nps => {
-                    placesVisitedArray.push({ "name": nps, "type": "national park" });
-                });
-            });
+        svg
+          .selectAll("circle")
+          .data(placesVisitedLocations)
+          .enter()
+          .append("circle")
+          .attr("cx", function (d) {
+            return projection(d)[0];
+          })
+          .attr("cy", function (d) {
+            return projection(d)[1];
+          })
+          .attr("r", "4.5px")
+          .attr("fill", function (d) {
+            return getColorFromCoords(d);
+          })
+          .on("mouseover", function (d) {
+            d3.select("#tooltip")
+              .style("opacity", 1)
+              .text(getNameFromCoords(d));
+          })
+          .on("mousemove", function () {
+            d3.select("#tooltip")
+              .style("left", d3.event.pageX + 10 + "px")
+              .style("top", d3.event.pageY + 10 + "px");
+          })
+          .on("mouseout", function () {
+            d3.select("#tooltip").style("opacity", 0);
+          });
 
-            d3.select('body')
-                .append('div')
-                .attr('id', 'tooltip')
+        const numschools = placesVisitedArray.filter(
+          (place) => place.type == "school"
+        ).length;
+        const infoText =
+          "States visited: " +
+          statesVisited.length +
+          "</br> Colleges visited: " +
+          numschools +
+          "</br> National Parks visited: " +
+          (placesVisitedArray.length - numschools);
+        document.getElementById("numbers").innerHTML = infoText;
+      }
 
-            let svg = d3.select("div#map")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height);
-
-            svg.append("g")
-                .attr("class", "states")
-                .selectAll("path")
-                .data(mapData.features)
-                .enter().append("path")
-                .attr("d", path)
-                .classed('been-to', function (d) {
-                    return statesVisited.includes(d.properties.name)
-                });
-
-            await placesToCoords(placesVisitedArray);
-
-            svg.selectAll("circle")
-                .data(placesVisitedLocations).enter()
-                .append("circle")
-                .attr("cx", function (d) { return projection(d)[0]; })
-                .attr("cy", function (d) { return projection(d)[1]; })
-                .attr("r", "4.5px")
-                .attr("fill", function (d) {
-                    return getColorFromCoords(d);
-                })
-                .on('mouseover', function (d) {
-                    d3.select('#tooltip').style('opacity', 1).text(getNameFromCoords(d))
-                })
-                .on('mousemove', function () {
-                    d3.select('#tooltip')
-                        .style('left', d3.event.pageX + 10 + 'px')
-                        .style('top', d3.event.pageY + 10 + 'px')
-                })
-                .on('mouseout', function () {
-                    d3.select('#tooltip').style('opacity', 0)
-                });
-
-            const numschools = placesVisitedArray.filter(place => place.type == "school").length;
-            const infoText =
-                "States visited: " + statesVisited.length +
-                "</br> Colleges visited: " + numschools +
-                "</br> National Parks visited: " + (placesVisitedArray.length - numschools);
-            document.getElementById("numbers").innerHTML = infoText;
-            document.getElementById("caption").innerHTML = "Hooked up to a Google spreadsheet I use to keep track of previous travel. I collect shot glasses from colleges that I've visited, hence the documentation";
-
-        }
-
-        loadMap();
-
+      loadMap();
     </script>
+    <h2 class="info">Domestic</h2>
     <div id="map"></div>
-    <div class="info" id="caption"></div>
+    <div class="info" id="caption">
+      Hover for details. Hooked up to a Google spreadsheet I use to keep track
+      of previous travel. I collect shot glasses from colleges that I've
+      visited, hence the documentation
+    </div>
     <div class="info" id="numbers"></div>
-</body>
-
+    <h2 class="header">Countries Visited</h2>
+    <ol>
+      <li>China (1998)</li>
+      <li>United States (2000)</li>
+      <li>Mexico (2022 - first year with a US passport!)</li>
+      <li>Switzerland (2022)</li>
+      <li>Germany (2022)</li>
+      <li>Norway (2022)</li>
+      <li>United Kingdom (2022)</li>
+      <li>Fiji (2022)</li>
+      <li>Australia (2022)</li>
+      <li>New Zealand (2022)</li>
+      <li>Chile (2022)</li>
+    </ol>
+  </body>
 </html>
