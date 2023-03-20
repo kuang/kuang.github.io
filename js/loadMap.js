@@ -48,13 +48,14 @@ async function placesToCoords(placesList) {
   await Promise.all(promises)
     .then(function (data) {
       for (const [i, place] of data.entries()) {
+        console.log(place);
         if (place.status == "OK") {
           latLongObj = place.results[0].geometry.location;
           const loc = [latLongObj.lng, latLongObj.lat];
           placesVisitedLocations.push(loc);
           locMap[latLongObj.lng + latLongObj.lat] = placesList[i].name;
 
-          localStorage.setItem(place.name, JSON.stringify(loc));
+          localStorage.setItem(placesList[i].name, JSON.stringify(loc));
         } else {
           console.log(
             `no data found for ${JSON.stringify(placesList[i].name)}`
