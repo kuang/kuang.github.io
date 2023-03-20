@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Travel</title>
+    <link rel="stylesheet" href="./css/justifiedGallery.min.css" />
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="./js/jquery.justifiedGallery.min.js"></script>
+    <style>
+      #international-wrapper {
+        display: grid;
+        grid-template-columns: 250px auto;
+        gap: 10px;
+      }
+      #left-international {
+        grid-column: 1;
+      }
+      #right-international {
+        grid-column: 2;
+      }
+      #country-name {
+        text-transform: capitalize;
+      }
+
+      #tooltip {
+        position: absolute;
+        text-align: center;
+        padding: 5px;
+        font: 14px sans-serif;
+        background: lightsteelblue;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .info {
+        margin: 20px;
+      }
+
+      .states {
+        fill: none;
+        stroke: black;
+        stroke-linejoin: round;
+      }
+
+      .been-to {
+        fill: salmon;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2 class="header">International</h2>
+    <div id="international-wrapper">
+      <div id="left-international">
+        <ol id="countries-list">
+          <b>1998</b>
+          <li>China</li>
+          <b>2000</b>
+          <li>United States</li>
+          <b>2022</b>
+          <li>Mexico</li>
+          <li>
+            <a href="javascript:void(0);" onclick="changeCountry(this);"
+              >Switzerland</a
+            >
+          </li>
+          <li>Germany</li>
+          <li>
+            <a href="javascript:void(0);" onclick="changeCountry(this);"
+              >Norway</a
+            >
+          </li>
+          <li>United Kingdom</li>
+          <li>Fiji</li>
+          <li>Australia</li>
+          <li>
+            <a href="javascript:void(0);" onclick="changeCountry(this);"
+              >New Zealand</a
+            >
+          </li>
+          <li>
+            <a
+              id="default-country"
+              href="javascript:void(0);"
+              onclick="changeCountry(this);"
+              >Chile</a
+            >
+          </li>
+        </ol>
+      </div>
+      <div id="right-international">
+        <h2 id="country-name"></h2>
+        <div id="gallery"></div>
+      </div>
+    </div>
+    <h2 class="info">Domestic</h2>
+    <div id="map"></div>
+    <div class="info" id="caption">
+      Hover for details. Hooked up to a Google spreadsheet I use to keep track
+      of previous travel. I collect shot glasses from colleges that I've
+      visited, hence the documentation
+    </div>
+    <div class="info" id="numbers"></div>
+
+    <script type="text/javascript">
+      const allCountryFiles = {
+        switzerland: [
+          "img_7297.jpg",
+          "img_8522.jpg",
+          "img_8648.jpg",
+          "img_8666.jpg",
+          "img_8770.jpg",
+          "img_8867.jpg",
+          "img_8332.jpg",
+          "img_8555.jpg",
+          "img_8656.jpg",
+          "img_8694.jpg",
+          "img_8799.jpg",
+          "img_8919.jpg",
+          "img_8491.jpg",
+          "img_8597.jpg",
+          "img_8658.jpg",
+          "img_8715.jpg",
+          "img_8854.jpg",
+        ],
+        chile: [
+          "IMG_3281.JPG",
+          "IMG_3290.JPG",
+          "IMG_3296.JPG",
+          "IMG_3379.JPG",
+          "IMG_3425.JPG",
+          "IMG_3427.JPG",
+          "IMG_3445.JPG",
+          "IMG_3448.JPG",
+          "IMG_3471.JPG",
+          "IMG_3490.JPG",
+          "IMG_3500.JPG",
+          "IMG_3560.JPG",
+          "IMG_3565.JPG",
+          "IMG_3595.JPG",
+          "IMG_3599.JPG",
+          "IMG_3629.JPG",
+          "IMG_3664.JPG",
+          "IMG_3673.JPG",
+          "IMG_3713.JPG",
+          "IMG_3734.JPG",
+          "IMG_3737.JPG",
+          "IMG_3788.JPG",
+          "IMG_3791.JPG",
+          "IMG_3793.JPG",
+          "IMG_3802.JPG",
+          "IMG_3809.JPG",
+          "IMG_3886.JPG",
+        ],
+        norway: [
+          "IMG_0185.JPG",
+          "IMG_0192.JPG",
+          "IMG_0231.JPG",
+          "IMG_0258.JPG",
+          "IMG_0265.JPG",
+          "IMG_0269.JPG",
+          "IMG_0274.JPG",
+          "IMG_0332.JPG",
+          "IMG_0868.JPG",
+          "IMG_0911.JPG",
+          "IMG_0914.JPG",
+          "IMG_0940.JPG",
+          "IMG_0944.JPG",
+          "IMG_1112.JPG",
+          "IMG_7700.JPG",
+          "IMG_8103.JPG",
+        ],
+        "new zealand": [
+          "IMG_2150.JPG",
+          "IMG_2152.JPG",
+          "IMG_2184.JPG",
+          "IMG_2286.JPG",
+          "IMG_2290.JPG",
+          "IMG_2294.JPG",
+          "IMG_2389.JPG",
+          "IMG_2416.JPG",
+          "IMG_2479.JPG",
+          "IMG_2491.JPG",
+          "IMG_2512.JPG",
+          "IMG_2514.JPG",
+          "IMG_2560.JPG",
+          "IMG_2566.JPG",
+          "IMG_2650.JPG",
+          "IMG_2740.JPG",
+          "IMG_2772.JPG",
+          "IMG_2784.JPG",
+          "IMG_2809.JPG",
+          "IMG_2836.JPG",
+          "IMG_2859.JPG",
+        ],
+      };
+
+      const changeCountry = (elem) => {
+        if (elem instanceof HTMLElement) {
+          const title = elem.innerHTML;
+          let isCurrentCountry = false;
+          $("#countries-list li a").each(function () {
+            const current = this.innerHTML;
+            if (current.includes("selected") === true) {
+              if (current.includes(title)) {
+                isCurrentCountry = true;
+              }
+              this.style.fontWeight = "normal";
+              this.innerHTML = this.innerHTML.replace(" (selected)", "");
+            }
+          });
+
+          if (isCurrentCountry) {
+            return;
+          }
+          $("#gallery").empty();
+
+          elem.innerHTML = elem.innerHTML + " (selected)";
+          elem.style.fontWeight = "bold";
+          elem = title;
+        }
+
+        const country = elem.toLowerCase();
+        const files = allCountryFiles[country];
+        for (const filePath of files) {
+          const parentDiv = document.createElement("div");
+          const img = document.createElement("img");
+          const src = `images/photos/${country}/${filePath}`;
+
+          img.src = src;
+          parentDiv.appendChild(img);
+          document.getElementById("gallery").appendChild(parentDiv);
+        }
+
+        $("#gallery").justifiedGallery({
+          rowHeight: 250,
+          lastRow: "nojustify",
+          margins: 5,
+        });
+        document.getElementById("country-name").innerHTML = elem;
+      };
+
+      changeCountry(document.getElementById("default-country"));
+    </script>
+    <script src="js/loadMap.js"></script>
+  </body>
+</html>
