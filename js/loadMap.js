@@ -33,7 +33,6 @@ async function placesToCoords(placesList) {
   let places_not_cached = [];
   for (const place of placesList) {
     if (localStorage.getItem(place.name) !== null) {
-      console.log("found in storage: " + place.name);
       const coord = JSON.parse(localStorage.getItem(place.name));
 
       placesVisitedLocations.push(coord);
@@ -48,7 +47,6 @@ async function placesToCoords(placesList) {
   await Promise.all(promises)
     .then(function (data) {
       for (const [i, place] of data.entries()) {
-        console.log(place);
         if (place.status == "OK") {
           latLongObj = place.results[0].geometry.location;
           const loc = [latLongObj.lng, latLongObj.lat];

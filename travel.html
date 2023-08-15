@@ -89,6 +89,14 @@
               >Chile</a
             >
           </li>
+          <li>
+            <a
+              id="default-country"
+              href="javascript:void(0);"
+              onclick="changeCountry(this);"
+              >Japan</a
+            >
+          </li>
         </ol>
       </div>
       <div id="right-international">
@@ -105,102 +113,15 @@
     </div>
     <div class="info" id="numbers"></div>
 
+    <script type="text/javascript" src="js/imageURLs.js"></script>
     <script type="text/javascript">
-      const allCountryFiles = {
-        switzerland: [
-          "IMG_7297.jpg",
-          "IMG_8332.jpg",
-          "IMG_8491.jpg",
-          "IMG_8522.JPG",
-          "IMG_8555.JPG",
-          "IMG_8597.JPG",
-          "IMG_8648.JPG",
-          "IMG_8656.JPG",
-          "IMG_8658.JPG",
-          "IMG_8666.JPG",
-          "IMG_8694.JPG",
-          "IMG_8715.JPG",
-          "IMG_8770.JPG",
-          "IMG_8799.JPG",
-          "IMG_8854.JPG",
-          "IMG_8867.JPG",
-          "IMG_8919.JPG",
-        ],
-        chile: [
-          "IMG_3281.JPG",
-          "IMG_3290.JPG",
-          "IMG_3296.JPG",
-          "IMG_3379.JPG",
-          "IMG_3425.JPG",
-          "IMG_3427.JPG",
-          "IMG_3445.JPG",
-          "IMG_3448.JPG",
-          "IMG_3471.JPG",
-          "IMG_3490.JPG",
-          "IMG_3500.JPG",
-          "IMG_3560.JPG",
-          "IMG_3565.JPG",
-          "IMG_3595.JPG",
-          "IMG_3599.JPG",
-          "IMG_3629.JPG",
-          "IMG_3664.JPG",
-          "IMG_3673.JPG",
-          "IMG_3713.JPG",
-          "IMG_3734.JPG",
-          "IMG_3737.JPG",
-          "IMG_3788.JPG",
-          "IMG_3791.JPG",
-          "IMG_3793.JPG",
-          "IMG_3802.JPG",
-          "IMG_3809.JPG",
-          "IMG_3886.JPG",
-        ],
-        norway: [
-          "IMG_0185.JPG",
-          "IMG_0192.JPG",
-          "IMG_0231.JPG",
-          "IMG_0258.JPG",
-          "IMG_0265.JPG",
-          "IMG_0269.JPG",
-          "IMG_0274.JPG",
-          "IMG_0332.JPG",
-          "IMG_0868.JPG",
-          "IMG_0911.JPG",
-          "IMG_0914.JPG",
-          "IMG_0940.JPG",
-          "IMG_0944.JPG",
-          "IMG_1112.JPG",
-          "IMG_7700.JPG",
-          "IMG_8103.JPG",
-        ],
-        "new zealand": [
-          "IMG_2150.JPG",
-          "IMG_2152.JPG",
-          "IMG_2184.JPG",
-          "IMG_2286.JPG",
-          "IMG_2290.JPG",
-          "IMG_2294.JPG",
-          "IMG_2389.JPG",
-          "IMG_2416.JPG",
-          "IMG_2479.JPG",
-          "IMG_2491.JPG",
-          "IMG_2512.JPG",
-          "IMG_2514.JPG",
-          "IMG_2560.JPG",
-          "IMG_2566.JPG",
-          "IMG_2650.JPG",
-          "IMG_2740.JPG",
-          "IMG_2772.JPG",
-          "IMG_2784.JPG",
-          "IMG_2809.JPG",
-          "IMG_2836.JPG",
-          "IMG_2859.JPG",
-        ],
-      };
-
       const changeCountry = (elem) => {
         if (elem instanceof HTMLElement) {
           const title = elem.innerHTML;
+          if (title.includes("selected") === true) {
+            return;
+          }
+
           let isCurrentCountry = false;
           $("#countries-list li a").each(function () {
             const current = this.innerHTML;
@@ -228,9 +149,8 @@
         for (const filePath of files) {
           const parentDiv = document.createElement("div");
           const img = document.createElement("img");
-          const src = `images/photos/${country}/${filePath}`;
 
-          img.src = src;
+          img.src = filePath;
           parentDiv.appendChild(img);
           document.getElementById("gallery").appendChild(parentDiv);
         }
