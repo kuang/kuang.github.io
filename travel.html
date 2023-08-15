@@ -1,167 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Travel</title>
-    <link rel="stylesheet" href="./css/justifiedGallery.min.css" />
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
-    <script src="./js/jquery.justifiedGallery.min.js"></script>
-    <style>
-      #international-wrapper {
-        display: grid;
-        grid-template-columns: 250px auto;
-        gap: 10px;
-      }
-      #left-international {
-        grid-column: 1;
-      }
-      #right-international {
-        grid-column: 2;
-      }
-      #country-name {
-        text-transform: capitalize;
-      }
 
-      #tooltip {
-        position: absolute;
-        text-align: center;
-        padding: 5px;
-        font: 14px sans-serif;
-        background: lightsteelblue;
-        border: 0px;
-        border-radius: 8px;
-        pointer-events: none;
-        opacity: 0;
-      }
+<head>
+  <meta charset="utf-8" />
+  <title>Travel</title>
+  <link rel="stylesheet" href="./css/justifiedGallery.min.css" />
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script src="./js/jquery.justifiedGallery.min.js"></script>
+  <style>
+    #international-wrapper {
+      display: grid;
+      grid-template-columns: 250px auto;
+      gap: 10px;
+    }
 
-      .info {
-        margin: 20px;
-      }
+    #left-international {
+      grid-column: 1;
+    }
 
-      .states {
-        fill: none;
-        stroke: black;
-        stroke-linejoin: round;
-      }
+    #right-international {
+      grid-column: 2;
+    }
 
-      .been-to {
-        fill: salmon;
-      }
-    </style>
-  </head>
+    #country-name {
+      text-transform: capitalize;
+    }
 
-  <body>
-    <h2 class="header">International</h2>
-    <div id="international-wrapper">
-      <div id="left-international">
-        <ol id="countries-list">
-          <b>1998</b>
-          <li>China</li>
-          <b>2000</b>
-          <li>United States</li>
-          <b>2022</b>
-          <li>Mexico</li>
-          <li>
-            <a href="javascript:void(0);" onclick="changeCountry(this);"
-              >Switzerland</a
-            >
-          </li>
-          <li>Germany</li>
-          <li>
-            <a href="javascript:void(0);" onclick="changeCountry(this);"
-              >Norway</a
-            >
-          </li>
-          <li>United Kingdom</li>
-          <li>Fiji</li>
-          <li>Australia</li>
-          <li>
-            <a href="javascript:void(0);" onclick="changeCountry(this);"
-              >New Zealand</a
-            >
-          </li>
-          <li>
-            <a href="javascript:void(0);" onclick="changeCountry(this);"
-              >Chile</a
-            >
-          </li>
-          <li>
-            <a
-              id="default-country"
-              href="javascript:void(0);"
-              onclick="changeCountry(this);"
-              >Japan</a
-            >
-          </li>
-        </ol>
-      </div>
-      <div id="right-international">
-        <h2 id="country-name"></h2>
-        <div id="gallery"></div>
-      </div>
+    #tooltip {
+      position: absolute;
+      text-align: center;
+      padding: 5px;
+      font: 14px sans-serif;
+      background: lightsteelblue;
+      border: 0px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .info {
+      margin: 20px;
+    }
+
+    .states {
+      fill: none;
+      stroke: black;
+      stroke-linejoin: round;
+    }
+
+    .been-to {
+      fill: salmon;
+    }
+  </style>
+</head>
+
+<body>
+  <h2 class="header">International</h2>
+  <div id="international-wrapper">
+    <div id="left-international">
+      <ol id="countries-list">
+        <b>1998</b>
+        <li>China</li>
+        </br>
+        <b>2000</b>
+        <li>United States</li>
+        </br>
+        <b>2022</b>
+        <li>Mexico</li>
+        <li>
+          <a href="javascript:void(0);" onclick="changeCountry(this);">Switzerland</a>
+        </li>
+        <li>Germany</li>
+        <li>
+          <a href="javascript:void(0);" onclick="changeCountry(this);">Norway</a>
+        </li>
+        <li>United Kingdom</li>
+        <li>Fiji</li>
+        <li>Australia</li>
+        <li>
+          <a href="javascript:void(0);" onclick="changeCountry(this);">New Zealand</a>
+        </li>
+        <li>
+          <a href="javascript:void(0);" onclick="changeCountry(this);">Chile</a>
+        </li>
+        </br>
+        <b>2023</b>
+        <li>
+          <a id="default-country" href="javascript:void(0);" onclick="changeCountry(this);">Japan</a>ƒ
+        </li>
+      </ol>
     </div>
-    <h2 class="info">Domestic</h2>
-    <div id="map"></div>
-    <div class="info" id="caption">
-      Hover for details. Hooked up to a Google spreadsheet I use to keep track
-      of previous travel. I collect shot glasses from colleges that I've
-      visited, hence the documentation
+    <div id="right-international">
+      <h2 id="country-name"></h2>
+      <div id="gallery"></div>
     </div>
-    <div class="info" id="numbers"></div>
+  </div>
+  <h2 class="info">Domestic</h2>
+  <div id="map"></div>
+  <div class="info" id="caption">
+    Hover for details. Hooked up to a Google spreadsheet I use to keep track
+    of previous travel. I collect shot glasses from colleges that I've
+    visited, hence the documentation
+  </div>
+  <div class="info" id="numbers"></div>
 
-    <script type="text/javascript" src="js/imageURLs.js"></script>
-    <script type="text/javascript">
-      const changeCountry = (elem) => {
-        if (elem instanceof HTMLElement) {
-          const title = elem.innerHTML;
-          if (title.includes("selected") === true) {
-            return;
-          }
+  <script type="text/javascript" src="js/imageURLs.js"></script>
+  <script type="text/javascript">
+    const changeCountry = (elem) => {
+      if (elem instanceof HTMLElement) {
+        const title = elem.innerHTML;
+        if (title.includes("selected") === true) {
+          return;
+        }
 
-          let isCurrentCountry = false;
-          $("#countries-list li a").each(function () {
-            const current = this.innerHTML;
-            if (current.includes("selected") === true) {
-              if (current.includes(title)) {
-                isCurrentCountry = true;
-              }
-              this.style.fontWeight = "normal";
-              this.innerHTML = this.innerHTML.replace(" (selected)", "");
+        let isCurrentCountry = false;
+        $("#countries-list li a").each(function () {
+          const current = this.innerHTML;
+          if (current.includes("selected") === true) {
+            if (current.includes(title)) {
+              isCurrentCountry = true;
             }
-          });
-
-          if (isCurrentCountry) {
-            return;
+            this.style.fontWeight = "normal";
+            this.innerHTML = this.innerHTML.replace(" (selected)", "");
           }
-          $("#gallery").empty();
-
-          elem.innerHTML = elem.innerHTML + " (selected)";
-          elem.style.fontWeight = "bold";
-          elem = title;
-        }
-
-        const country = elem.toLowerCase();
-        const files = allCountryFiles[country];
-        for (const filePath of files) {
-          const parentDiv = document.createElement("div");
-          const img = document.createElement("img");
-
-          img.src = filePath;
-          parentDiv.appendChild(img);
-          document.getElementById("gallery").appendChild(parentDiv);
-        }
-
-        $("#gallery").justifiedGallery({
-          rowHeight: 250,
-          lastRow: "nojustify",
-          margins: 5,
         });
-        document.getElementById("country-name").innerHTML = elem;
-      };
 
-      changeCountry(document.getElementById("default-country"));
-    </script>
-    <script src="js/loadMap.js"></script>
-  </body>
+        if (isCurrentCountry) {
+          return;
+        }
+        $("#gallery").empty();
+
+        elem.innerHTML = elem.innerHTML + " (selected)";
+        elem.style.fontWeight = "bold";
+        elem = title;
+      }
+
+      const country = elem.toLowerCase();
+      const files = allCountryFiles[country];
+      for (const filePath of files) {
+        const parentDiv = document.createElement("div");
+        const img = document.createElement("img");
+
+        img.src = filePath;
+        parentDiv.appendChild(img);
+        document.getElementById("gallery").appendChild(parentDiv);
+      }
+
+      $("#gallery").justifiedGallery({
+        rowHeight: 250,
+        lastRow: "nojustify",
+        margins: 5,
+      });
+      document.getElementById("country-name").innerHTML = elem;
+    };
+
+    changeCountry(document.getElementById("default-country"));
+  </script>
+  <script src="js/loadMap.js"></script>
+</body>
+
 </html>
