@@ -39,10 +39,6 @@
       opacity: 0;
     }
 
-    .info {
-      margin: 20px;
-    }
-
     .states {
       fill: none;
       stroke: black;
@@ -56,7 +52,7 @@
 </head>
 
 <body>
-  <h2 class="header">International</h2>
+  <h1>International</h1>
   <div id="international-wrapper">
     <div id="left-international">
       <ol id="countries-list">
@@ -104,14 +100,14 @@
       <div id="gallery"></div>
     </div>
   </div>
-  <h2 class="info">Domestic</h2>
-  <div id="map"></div>
-  <div class="info" id="caption">
+  <h1>Domestic</h1>
+  <div id="map" style="max-width: 100%;"></div>
+  <div id="caption">
     Hover for details. Hooked up to a Google spreadsheet I use to keep track
     of previous travel. I collect shot glasses from colleges that I've
     visited, hence the documentation
   </div>
-  <div class="info" id="numbers"></div>
+  <div id="numbers"></div>
 
   <script type="text/javascript" src="js/imageURLs.js"></script>
   <script type="text/javascript">

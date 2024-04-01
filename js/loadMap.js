@@ -1,6 +1,6 @@
 //Width and height of map
-const width = 1280;
-const height = 580;
+const width = 896;
+const height = 464;
 
 // D3 Projection
 const projection = d3
