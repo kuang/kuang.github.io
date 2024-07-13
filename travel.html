@@ -65,28 +65,28 @@
         <b>2022</b>
         <li>Mexico</li>
         <li>
-          <a href="javascript:void(0);" onclick="changeCountry(this);">Switzerland</a>
+          <a href="javascript:void(0);" class="country" id="switzerland">Switzerland</a>
         </li>
         <li>Germany</li>
         <li>
-          <a href="javascript:void(0);" onclick="changeCountry(this);">Norway</a>
+          <a href="javascript:void(0);" class="country" id="norway">Norway</a>
         </li>
         <li>United Kingdom</li>
         <li>Fiji</li>
         <li>Australia</li>
         <li>
-          <a href="javascript:void(0);" onclick="changeCountry(this);">New Zealand</a>
+          <a href="javascript:void(0);" class="country" id="new_zealand">New Zealand</a>
         </li>
         <li>
-          <a href="javascript:void(0);" onclick="changeCountry(this);">Chile</a>
+          <a href="javascript:void(0);" class="country" id="chile">Chile</a>
         </li>
         </br>
         <b>2023</b>
         <li>
-          <a href="javascript:void(0);" onclick="changeCountry(this);">Japan</a>
+          <a href="javascript:void(0);" class="country" id="japan">Japan</a>
         </li>
         <li>
-          <a href="javascript:void(0);" onclick="changeCountry(this);">Taiwan</a>
+          <a href="javascript:void(0);" class="country" id="taiwan">Taiwan</a>
         </li>
         </br>
         <b>2024</b>
@@ -94,10 +94,10 @@
           <a>Canada</a>
         </li>
         <li>
-          <a id="default-country" href="javascript:void(0);" onclick="changeCountry(this);">Italy</a>
+          <a href="javascript:void(0);" class="country" id="italy">Italy</a>
         </li>
         <li>
-          <a href="javascript:void(0);" onclick="changeCountry(this);">Vatican City</a>
+          <a href="javascript:void(0);" class="country" id="vatican_city">Vatican City</a>
         </li>
       </ol>
     </div>
@@ -165,7 +165,27 @@
       document.getElementById("country-name").innerHTML = elem;
     };
 
-    changeCountry(document.getElementById("default-country"));
+    const COUNTRY_URL_PARAM = "country";
+    const DEFAULT_COUNTRY = "italy";
+
+    window.onload = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedCountry = urlParams.get(COUNTRY_URL_PARAM) || DEFAULT_COUNTRY;
+
+      changeCountry(document.getElementById(selectedCountry));
+    }
+
+    $(".country").click((e) => {
+      changeCountry(e.target);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set(COUNTRY_URL_PARAM, encodeURIComponent(e.target.id));
+
+      const newURL = new URL(window.location);
+      newURL.search = urlParams.toString();
+
+      window.history.replaceState({}, '', newURL);
+    })
   </script>
   <script src="js/loadMap.js"></script>
 </body>
