@@ -228,7 +228,6 @@ const allCountryFiles = {
     "https://lh3.googleusercontent.com/pw/ADCreHcoZ5L7N0ghFc-CKV397wLPRX7M7Di5W_za9SDrkGU_sxODevKDbLyAyx_-bnRoDePj0kdvZEBi6-KKYqXk0YdWmO4n-GdltZmYGTCvENONiAx3ZWo",
     "https://lh3.googleusercontent.com/pw/ADCreHfnS-T9wVwxAYUMrCqgLp9nNRU25hbNN1u7Yvr2WKjhvdxVyRV9bf9xYuwcH68FxvzdL9fLRzdq5xJY9HUKMfjR2jYn9EdFMXNmB1iRrI9I8DFoGMY",
     "https://lh3.googleusercontent.com/pw/ADCreHdyOUB7GYiOJ0mjHLbgGas5FvjKOXxXPHK8j849bBEIuKurCFhaceUEbs4aUyjmso9Y4Wv-cXHnGPLhJG83dpOu_9Hk1RgrgVGXjAQ8-ffXwEKLwLE",
-    "https://lh3.googleusercontent.com/pw/ADCreHeB3M4w9UueggACtWrWg-TSIKlk-Cp0DPB20v1oOV5bc3i2de3NinsOVMmJfgFUR8c214yKCis0TDrktfIdwggjjuyALBlGOKwIe6LA5XuDWnoKTH4",
     "https://lh3.googleusercontent.com/pw/ADCreHfPFiApFzh6avZlPWhDzGT6gaem4octY-AxuudjhPluUIReepjqYmHRJjZk-2gDXmVW-1cJBLNdBHpB6NvHKZL6rAF3zj5l9UdQ7vU6PH0zvH2C9g4",
     "https://lh3.googleusercontent.com/pw/ADCreHe2oRPt6JNYqoJvB0IbclBZlgTQ0ajIQQbWq_IiSu_3N4s62XtRm9luvNcjOdUzuq9biKeNRSto_N2kEGa2oXiraQbhTKpjTrHgAuGSV-9Wtd5GfhU",
     "https://lh3.googleusercontent.com/pw/ADCreHd44YkBiY-exzDtt2ae5e5EhUQPdhdOPzE03tob2eMugTMJA2duHO0acTcU34q2XTlqWCyOdUIFM1cyEF6kX9mzar1wD7OcAPAjz-ydNzAidoXz-K4",
