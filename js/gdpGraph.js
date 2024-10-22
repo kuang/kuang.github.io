@@ -1,6 +1,25 @@
 // store map of country codes to country names in memory
-const countryCodeMap = {};
-
+const countryCodeMap = localStorage.getItem("countryCodeMap") || {};
+const countryColorsMap = {};
+const NO_DATA_COUNTRY_LIST = [
+  "KOS",
+  "BES",
+  "AIA",
+  "ASM",
+  "BMU",
+  "CHI",
+  "COK",
+  "CUB",
+  "CYM",
+  "ESH",
+  "FLK",
+  "FRO",
+  "GIB",
+  "GLP",
+  "GRL",
+  "GUF",
+  "GUM",
+];
 const getRandomColor = () => {
   var letters = "0123456789ABCDEF";
   var color = "#";
@@ -13,7 +32,7 @@ const getRandomColor = () => {
 const transformData = (data) =>
   Object.keys(data || {})
     .filter((year) => {
-      return year < 2025;
+      return year <= 2024;
     })
     .map((year) => ({
       x: year,
@@ -48,11 +67,14 @@ const renderLineGraph = (countryData) => {
   for (country of countryData) {
     if (!country.data) continue; // don't plot if no data
 
+    const randColor = countryColorsMap[country.name] ?? getRandomColor();
+    countryColorsMap[country.name] = randColor; // store color in memory too
+
     svG
       .append("path")
       .datum(transformData(country.data))
       .attr("fill", "none")
-      .attr("stroke", getRandomColor()) // TODO: hardcode USA as red/white/blue gradient stroke
+      .attr("stroke", randColor) // TODO: hardcode USA as red/white/blue gradient stroke
       .attr("stroke-width", 3)
       .attr("class", "country_line")
       .attr(
@@ -62,6 +84,18 @@ const renderLineGraph = (countryData) => {
           .x((d) => x(d.x))
           .y((d) => y(d.y))
       );
+
+    // add country name to end of line
+    svG
+      .append("text")
+      .attr(
+        "transform",
+        "translate(" + (x(2024) + 5) + "," + y(country.data["2024"]) + ")"
+      )
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", randColor)
+      .text(country.name);
   }
 
   // append a g for all the mouse over nonsense
@@ -148,13 +182,18 @@ const renderLineGraph = (countryData) => {
 
       // update the text
       let countryDataText = "";
+
       for (country of countryData) {
         const countryDataPoint = transformData(country.data).find(
           (dataPoint) => dataPoint.x == year
         );
-        countryDataText += `${country.name}: $${Math.trunc(
-          countryDataPoint?.y
-        )} USD </br>`;
+
+        const GDPperCapita = Math.trunc(countryDataPoint?.y);
+
+        // some countries don't have data back to 1980, etc
+        if (GDPperCapita) {
+          countryDataText += `${country.name}: $${GDPperCapita} USD </br>`;
+        }
       }
       d3.select("#caption").html(`year: ${year} </br> ${countryDataText}`);
     });
@@ -205,17 +244,27 @@ const addCountryOptions = async () => {
 
   // create new set
   select.innerHTML = Object.keys(data.countries).map((countryKey) => {
-    countryCodeMap[countryKey] = data.countries[countryKey].label;
+    let countryName = data.countries[countryKey].label;
 
+    if (!countryName) return null;
+    if (NO_DATA_COUNTRY_LIST.includes(countryKey)) return null;
+
+    // some manual cleanup
+    if (countryKey === "TWN") countryName = "Taiwan";
+    else if (countryKey === "USA") countryName = "United States";
+
+    countryCodeMap[countryKey] = countryName;
     return (
       '<option value="' +
       countryKey +
       '"' +
       `${countryKey === "USA" ? "selected" : ""}>` +
-      data.countries[countryKey].label +
+      countryName +
       "</option>"
     );
   });
+
+  localStorage.setItem("countryCodeMap", countryCodeMap);
 
   // default select USA
 
@@ -234,7 +283,7 @@ function updateCountrySelections() {
 }
 
 const margin = { top: 50, right: 50, bottom: 30, left: 50 },
-  width = 700 - margin.left - margin.right,
+  width = 800 - margin.left - margin.right,
   height = 400 - margin.top - margin.bottom;
 
 const svG = d3
@@ -245,7 +294,7 @@ const svG = d3
   .append("g")
   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-addCountryOptions();
-
-// default - US
-loadAndRenderGraph(["USA"]);
+addCountryOptions().then(() => {
+  // default - US
+  loadAndRenderGraph(["USA"]);
+});
