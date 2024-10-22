@@ -1,5 +1,5 @@
 // store map of country codes to country names in memory
-const countryCodeMap = localStorage.getItem("countryCodeMap") || {};
+const countryCodeMap = JSON.parse(localStorage["countryCodeMap"]) || {};
 const countryColorsMap = {};
 const NO_DATA_COUNTRY_LIST = [
   "KOS",
@@ -21,12 +21,7 @@ const NO_DATA_COUNTRY_LIST = [
   "GUM",
 ];
 const getRandomColor = () => {
-  var letters = "0123456789ABCDEF";
-  var color = "#";
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
+  return "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0");
 };
 
 const transformData = (data) =>
@@ -85,12 +80,21 @@ const renderLineGraph = (countryData) => {
           .y((d) => y(d.y))
       );
 
+    // get most recent year of data
+    const mostRecentYear = Object.keys(country.data).sort().reverse()[0];
+
+    const mostRecentYearToUse = mostRecentYear > 2024 ? 2024 : mostRecentYear;
+
     // add country name to end of line
     svG
       .append("text")
       .attr(
         "transform",
-        "translate(" + (x(2024) + 5) + "," + y(country.data["2024"]) + ")"
+        "translate(" +
+          (x(mostRecentYearToUse) + 5) +
+          "," +
+          Math.min(y(country.data[mostRecentYearToUse]), height - 10) +
+          ")"
       )
       .attr("dy", ".35em")
       .attr("text-anchor", "start")
@@ -233,42 +237,47 @@ const loadAndRenderGraph = async (countryCodeList) => {
 };
 
 const addCountryOptions = async () => {
-  const data = await fetch(
-    "https://corsproxy.io/?https://www.imf.org/external/datamapper/api/v1/countries"
-  )
-    .then((response) => response.json())
-    .catch((error) => console.error(error));
+  if (!Object.keys(countryCodeMap).length) {
+    const data = await fetch(
+      "https://corsproxy.io/?https://www.imf.org/external/datamapper/api/v1/countries"
+    )
+      .then((response) => response.json())
+      .catch((error) => console.error(error));
+
+    Object.keys(data.countries).map((countryKey) => {
+      let countryName = data.countries[countryKey].label;
+
+      if (!countryName) return null;
+      if (NO_DATA_COUNTRY_LIST.includes(countryKey)) return null;
+
+      // some manual cleanup
+      if (countryKey === "TWN") countryName = "Taiwan";
+      else if (countryKey === "USA") countryName = "United States";
+
+      countryCodeMap[countryKey] = countryName;
+    });
+
+    localStorage.setItem("countryCodeMap", JSON.stringify(countryCodeMap));
+  }
 
   // set options for the select element
   const select = document.getElementById("countries_selector");
 
-  // create new set
-  select.innerHTML = Object.keys(data.countries).map((countryKey) => {
-    let countryName = data.countries[countryKey].label;
-
-    if (!countryName) return null;
-    if (NO_DATA_COUNTRY_LIST.includes(countryKey)) return null;
-
-    // some manual cleanup
-    if (countryKey === "TWN") countryName = "Taiwan";
-    else if (countryKey === "USA") countryName = "United States";
-
-    countryCodeMap[countryKey] = countryName;
+  select.innerHTML = Object.keys(countryCodeMap).map((countryKey) => {
     return (
       '<option value="' +
       countryKey +
       '"' +
       `${countryKey === "USA" ? "selected" : ""}>` +
-      countryName +
+      `${countryCodeMap[countryKey]}` +
       "</option>"
     );
   });
-
-  localStorage.setItem("countryCodeMap", countryCodeMap);
-
-  // default select USA
-
-  select.loadOptions();
+  try {
+    select.loadOptions();
+  } catch (err) {
+    // known error with multi-select library - loadOptions()
+  }
 };
 
 function updateCountrySelections() {
