@@ -1,5 +1,8 @@
 // store map of country codes to country names in memory
-const countryCodeMap = JSON.parse(localStorage["countryCodeMap"]) || {};
+const countryCodeMap = localStorage["countryCodeMap"]
+  ? JSON.parse(localStorage["countryCodeMap"])
+  : {};
+
 const countryColorsMap = {};
 const NO_DATA_COUNTRY_LIST = [
   "KOS",
