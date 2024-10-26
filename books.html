@@ -36,9 +36,9 @@
         }
 
         .notes {
-            min-width: 800px;
-            width: 800px;
-            max-width: 800px;
+            min-width: 600px;
+            width: 600px;
+            max-width: 600px;
         }
 
         .tags {
@@ -64,11 +64,11 @@
 
         function linkify(inputText) {
             var replacedText, replacePattern1, replacePattern2, replacePattern3;
-            if(!inputText) return '';
+            if (!inputText) return '';
             //URLs starting with http://, https://, or ftp://
             replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
             replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
-            
+
             //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
             replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
             replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
