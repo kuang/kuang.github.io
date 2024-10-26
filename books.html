@@ -14,37 +14,27 @@
 
         table {
             border-collapse: collapse;
-            width: 1600px;
+            /* min-width: 1400px; */
         }
 
         .title {
-            min-width: 200px;
-            width: 200px;
             max-width: 200px;
         }
 
         .author {
-            min-width: 200px;
-            width: 200px;
-            max-width: 200px;
+            width: 100px;
         }
 
         .year_read {
-            min-width: 50px;
             width: 50px;
-            max-width: 50px;
         }
 
         .notes {
-            min-width: 600px;
-            width: 600px;
-            max-width: 600px;
+            max-width: 900px;
         }
 
         .tags {
-            min-width: 50px;
             width: 50px;
-            max-width: 50px;
         }
 
         table td {
@@ -96,11 +86,11 @@
                 let tags = row[5] || '';
 
                 let row_info = "<tr>";
-                row_info += "<td>" + row[1] + "</td>";
-                row_info += "<td>" + row[2] + "</td>";
-                row_info += "<td>" + row[3] + "</td>";
-                row_info += "<td>" + notes + "</td>";
-                row_info += "<td>" + tags + "</td>";
+                row_info += `<td class="title">` + row[1] + "</td>";
+                row_info += `<td class="author">` + row[2] + "</td>";
+                row_info += `<td class="year_read">` + row[3] + "</td>";
+                row_info += `<td class="notes">` + notes + "</td>";
+                row_info += `<td class="tags">` + tags + "</td>";
 
                 row_info += "</tr>";
                 table.append(row_info);
