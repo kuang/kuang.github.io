@@ -109,7 +109,7 @@
           <a href="javascript:void(0);" class="country" id="austria">Austria</a>
         </li>
         <li>
-          <a href="javascript:void(0);" class="country" id="spain">Spain</a>
+          <a href="javascript:void(0);" class="country" id="italy">Spain</a>
         </li>
         <li>
           <a href="javascript:void(0);" class="country" id="france">France</a>
@@ -163,7 +163,7 @@
 
       const country = elem.toLowerCase();
       const files = allCountryFiles[country];
-      for (const filePath of files) {
+      for (const filePath of files || []) {
         const parentDiv = document.createElement("div");
         const img = document.createElement("img");
 
@@ -181,7 +181,7 @@
     };
 
     const COUNTRY_URL_PARAM = "country";
-    const DEFAULT_COUNTRY = "italy";
+    const DEFAULT_COUNTRY = "france";
 
     window.onload = () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -191,6 +191,7 @@
     }
 
     $(".country").click((e) => {
+      console.log(e);
       changeCountry(e.target);
 
       const urlParams = new URLSearchParams(window.location.search);
