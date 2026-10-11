@@ -773,14 +773,14 @@
     statsDirty = true;
   }
 
-  function credit() {
+  function credit(sx, sy) {
     econ.stack++;
     econ.won++;
-    stackDelta++;
     statsDirty = true;
+    flyCoinToStack(sx, sy);
   }
 
-  var statsDirty = true, stackDelta = 0;
+  var statsDirty = true;
 
   function stepAnims() {
     var i, p;
@@ -793,7 +793,7 @@
         p.sx += p.vx;
         if (p.sy >= p.floor) {
           p.sy = p.floor;
-          if (!p.credited) { p.credited = true; credit(); floaters.push({ sx: p.sx, sy: p.sy - 10, life: 0 }); }
+          if (!p.credited) { p.credited = true; credit(p.sx, p.sy); floaters.push({ sx: p.sx, sy: p.sy - 10, life: 0 }); }
           if (p.vy > 2 && p.bounces < 3) { p.vy = -p.vy * 0.32; p.bounces++; }
           else { p.vy = 0; p.bounces = 3; p.vx *= 0.5; }
         }
@@ -1351,9 +1351,36 @@
 
   var stackEls = [];
   var PER_COL = 26, COL_W = 50, MAX_VIS = PER_COL * 5;
+  var inFlight = 0;   // won quarters still flying from the tray to the stack
+
+  // a quarter arcs out of the canvas and lands on your stack, then the count ticks up
+  function flyCoinToStack(cx, cy) {
+    var rect = canvas.getBoundingClientRect();
+    var sx = rect.left + cx * rect.width / CW, sy = rect.top + cy * rect.height / CH;
+    var viz = el.stackViz.getBoundingClientRect();
+    var shown = Math.max(0, econ.stack - inFlight - 1);
+    var col = Math.min(Math.floor(Math.min(shown, MAX_VIS - 1) / PER_COL), 4);
+    var tx = viz.left + 12 + col * COL_W + 22 * viz.width / Math.max(1, el.stackViz.offsetWidth);
+    var ty = viz.top + viz.height - 16 - Math.min(shown % PER_COL, PER_COL - 1) * 4 - 7;
+    var d = document.createElement('div');
+    d.className = 'fly-coin';
+    d.style.left = sx + 'px';
+    d.style.top = sy + 'px';
+    document.body.appendChild(d);
+    inFlight++;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { d.style.transform = 'translate(' + (tx - sx) + 'px,' + (ty - sy) + 'px)'; });
+    });
+    setTimeout(function () {
+      if (d.parentNode) d.parentNode.removeChild(d);
+      inFlight = Math.max(0, inFlight - 1);
+      syncStack();
+      A.coinTink(0, 0.35);
+    }, 600);
+  }
 
   function syncStack() {
-    var target = Math.min(econ.stack, MAX_VIS);
+    var target = Math.min(Math.max(0, econ.stack - inFlight), MAX_VIS);
     var added = 0;
     while (stackEls.length < target) {
       var i = stackEls.length;
@@ -1371,8 +1398,8 @@
       gone.classList.add('out');
       setTimeout(function (n) { if (n.parentNode) n.parentNode.removeChild(n); }.bind(null, gone), 220);
     }
-    el.stackEmpty.classList.toggle('hidden', econ.stack > 0);
-    el.stackCount.textContent = econ.stack;
+    el.stackEmpty.classList.toggle('hidden', econ.stack - inFlight > 0);
+    el.stackCount.textContent = Math.max(0, econ.stack - inFlight);
     el.stackCount.classList.remove('bump');
     void el.stackCount.offsetWidth;
     el.stackCount.classList.add('bump');
