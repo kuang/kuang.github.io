@@ -22,7 +22,7 @@
     THICK: 2.6,                  // coin thickness (z units)
     MAX_LAYERS: 5,               // how deep the pile can stack
 
-    P_MIN: 46,                   // pusher front edge when fully retracted: room for SHELF_ROWS rows of resident coins
+    P_MIN: 46,                   // pusher front edge when fully retracted: just covers the SHELF_ROWS resident rows
     P_MAX: 160,                  // pusher front edge when fully extended
     SHELF_ROWS: 3,               // rows of coins that live on the shelf; anything behind them tips off each stroke
     PERIOD: 4.5,                 // seconds for one back-and-forth
@@ -56,7 +56,8 @@
   var floaters = [];     // "+1" floating labels
   var layers = [];       // per-layer coin lists, rebuilt every physics step
   var econ = { stack: 0, spent: 0, won: 0, lost: 0, best: 0, played: 0, prizes: {} };
-  var pusher = { front: CFG.P_MAX, prevFront: CFG.P_MAX, dy: 0, dir: -1, t: CFG.PERIOD / 2 };
+  var pusher = { front: CFG.P_MAX, prevFront: CFG.P_MAX, dy: 0, dir: -1, t: CFG.PERIOD / 2, reach: CFG.P_MAX };
+  var STOCK_OVERREACH = 8;   // while stocking, the stroke goes this much further than in play
   var chuteX = W / 2;
   var settling = true, running = false, started = false;
   var combo = { count: 0, until: 0 };
@@ -224,12 +225,14 @@
     coins = [];
     shelfCoins = [];
     airCoins = [];
-    // the rows that ride on the shelf: the back wall holds them, so they never tip off,
-    // and any coin that lands behind them gets shoved over the shelf's edge each stroke
+    // the rows piled against the back wall: they stay put while the shelf slides under them,
+    // so any coin that lands in front of them gets shoved over the shelf's edge each stroke
     for (var sr = 0; sr < CFG.SHELF_ROWS; sr++) {
       var sy = R + sr * R2 * 0.96;
       for (var sx = R + 1 + (sr % 2) * R; sx <= W - R - 1; sx += R2 * 1.01) {
-        shelfCoins.push(makeCoin(sx + rnd(-0.6, 0.6), sy + rnd(-0.6, 0.6), 0, CFG.SHELF_H));
+        var rc = makeCoin(sx + rnd(-0.6, 0.6), sy + rnd(-0.6, 0.6), 0, CFG.SHELF_H);
+        rc.resident = true;
+        shelfCoins.push(rc);
       }
     }
     target -= shelfCoins.length;
@@ -390,7 +393,7 @@
     pusher.t += 1 / 60;
     var ph = (pusher.t % CFG.PERIOD) / CFG.PERIOD;
     pusher.prevFront = pusher.front;
-    pusher.front = CFG.P_MIN + (CFG.P_MAX - CFG.P_MIN) * (0.5 - 0.5 * Math.cos(ph * Math.PI * 2));
+    pusher.front = CFG.P_MIN + (pusher.reach - CFG.P_MIN) * (0.5 - 0.5 * Math.cos(ph * Math.PI * 2));
     pusher.dy = pusher.front - pusher.prevFront;
     var dir = pusher.dy >= 0 ? 1 : -1;
     if (dir !== pusher.dir) {
@@ -458,6 +461,7 @@
     for (i = 0; i < shelfCoins.length; i++) {
       c = shelfCoins[i];
       c.px = c.x; c.py = c.y; c.ov = 0;
+      if (c.resident) { c.vx = c.vy = 0; continue; }   // pinned against the back wall
       c.y += pdy;                 // rides with the shelf
       if (c.y < c.r) c.y = c.r;   // ...until the back wall holds it and the shelf slides out from under
       c.x += c.vx; c.y += c.vy;
@@ -489,15 +493,18 @@
       }
       for (i = 0; i < shelfCoins.length; i++) {
         c = shelfCoins[i];
+        if (c.resident) { c.x = c.px; c.y = c.py; continue; }   // immovable
         if (c.y < c.r) c.y = c.r;
         if (c.x < c.r) c.x = c.r; else if (c.x > W - c.r) c.x = W - c.r;
       }
     }
     // anything hanging more than halfway over the shelf's front edge tips onto the pile
+    // (the resident rows live against the back wall and stay put; they're what shoves your coins off)
     for (i = shelfCoins.length - 1; i >= 0; i--) {
       c = shelfCoins[i];
-      if (c.y > front + c.r * 0.15) {
+      if (!c.resident && c.y > front + c.r * 0.15) {
         shelfCoins.splice(i, 1);
+        if (settling) lastSettleEvent = frame;
         c.y += c.r * 0.6;
         c.layer = landingLayer(c.x, c.y);
         c.vy = 0.8 + rnd(0, 0.6);
@@ -676,8 +683,9 @@
       ny = nx ? 0 : (m === t ? -1 : 1);
       push = m + b.r;
     }
-    b.x += nx * push * 0.8; b.y += ny * push * 0.8;
-    gf.x -= nx * push * 0.2; gf.y -= ny * push * 0.2;
+    if (push < CFG.SLOP) return;   // same dead zone as coin-on-coin, or the box would never sit still
+    b.x += nx * push * 0.85; b.y += ny * push * 0.85;
+    gf.x -= nx * push * 0.15; gf.y -= ny * push * 0.15;
   }
 
   function stepGifts() {
@@ -1441,6 +1449,8 @@
 
   /* ------------------------------ persistence ------------------------------ */
   var SAVE_KEY = 'coinpusher.v1', SETTINGS_KEY = 'coinpusher.settings';
+  // the machine layout the coin positions belong to; a save from a different layout keeps your wallet but restocks
+  var LAYOUT = [CFG.W, CFG.D, CFG.R, CFG.P_MIN, CFG.P_MAX, CFG.SHELF_ROWS, CFG.MAX_LAYERS].join('/');
   var saveTimer = null;
 
   function save() {
@@ -1448,11 +1458,12 @@
     try {
       var pack = function (c) { return [Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, c.layer, Math.round(c.r * 100) / 100, Math.round(c.tip * 100) / 100]; };
       var data = {
+        layout: LAYOUT,
         econ: econ,
         stackInFlight: airCoins.length,
         t: pusher.t,
         coins: coins.map(pack),
-        shelf: shelfCoins.map(function (c) { return [Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, 0, Math.round(c.r * 100) / 100, Math.round(c.tip * 100) / 100]; }),
+        shelf: shelfCoins.map(function (c) { return [Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, c.resident ? 1 : 0, Math.round(c.r * 100) / 100, Math.round(c.tip * 100) / 100]; }),
         gifts: gifts.map(function (gf) { return [gf.kind, Math.round(gf.x * 10) / 10, Math.round(gf.y * 10) / 10, gf.layer]; }),
         giftRespawnIn: giftRespawnAt ? Math.max(0, giftRespawnAt - frame) : 0
       };
@@ -1475,14 +1486,15 @@
       for (k in econ) if (typeof data.econ[k] === 'number') econ[k] = data.econ[k];
       econ.prizes = (data.econ && data.econ.prizes && typeof data.econ.prizes === 'object') ? data.econ.prizes : {};
       econ.stack += data.stackInFlight || 0;
+      if (data.layout !== LAYOUT) return false;
       gifts = (data.gifts || []).filter(function (a) { return GIFT_KINDS[a[0]]; }).map(function (a) { return makeGift(a[0], a[1], a[2], clamp(a[3] | 0, 0, CFG.MAX_LAYERS)); });
       giftAnims = [];
       giftRespawnAt = data.giftRespawnIn ? frame + data.giftRespawnIn : (gifts.length ? 0 : frame + 60 * 5);
       coins = data.coins.map(function (a) { return makeCoin(a[0], a[1], clamp(a[2] | 0, 0, CFG.MAX_LAYERS - 1), null, a[3], a[4]); });
-      shelfCoins = (data.shelf || []).map(function (a) { return makeCoin(a[0], a[1], 0, CFG.SHELF_H, a[3], a[4]); });
+      shelfCoins = (data.shelf || []).map(function (a) { var c = makeCoin(a[0], a[1], 0, CFG.SHELF_H, a[3], a[4]); if (a[2] === 1) c.resident = true; return c; });
       airCoins = [];
       if (typeof data.t === 'number') pusher.t = data.t;
-      pusher.prevFront = pusher.front = CFG.P_MIN + (CFG.P_MAX - CFG.P_MIN) * (0.5 - 0.5 * Math.cos((pusher.t % CFG.PERIOD) / CFG.PERIOD * Math.PI * 2));
+      pusher.prevFront = pusher.front = CFG.P_MIN + (pusher.reach - CFG.P_MIN) * (0.5 - 0.5 * Math.cos((pusher.t % CFG.PERIOD) / CFG.PERIOD * Math.PI * 2));
       pusher.dy = 0;
       return true;
     } catch (e) { return false; }
@@ -1594,10 +1606,80 @@
   window.addEventListener('pagehide', save);
   document.addEventListener('visibilitychange', function () { if (document.hidden) save(); });
 
+  /* ------------------------------ easter egg: shake the phone, shake the machine ------------------------------ */
+  var shake = { last: null, hits: [], until: 0, armed: false };
+  var cabinet = document.querySelector('.screen-wrap');
+
+  function shakeMachine() {
+    if (!running) return;
+    var t = performance.now();
+    if (t < shake.until) return;
+    shake.until = t + 3500;
+    var i, c;
+    for (i = 0; i < coins.length; i++) {
+      c = coins[i];
+      c.vx += rnd(-2.6, 2.6);
+      c.vy += rnd(-2.0, 2.6);
+      if (c.layer > 0 && Math.random() < 0.35) c.vz = 1.2 + Math.random() * 1.2;
+    }
+    for (i = 0; i < shelfCoins.length; i++) {
+      c = shelfCoins[i];
+      if (c.resident) continue;
+      c.vx += rnd(-2, 2);
+      c.vy += rnd(-1, 1.5);
+      if (Math.random() < 0.4) c.vz = 1 + Math.random();
+    }
+    for (i = 0; i < gifts.length; i++) {
+      gifts[i].x += rnd(-5, 5);
+      gifts[i].y += rnd(-3, 5);
+      gifts[i].vz = 1.5;
+    }
+    toast('TILT!');
+    A.rumble();
+    if (cabinet) {
+      cabinet.classList.remove('shake');
+      void cabinet.offsetWidth;
+      cabinet.classList.add('shake');
+    }
+  }
+
+  function onMotion(e) {
+    var a = e.accelerationIncludingGravity || e.acceleration;
+    if (!a || a.x == null) return;
+    if (shake.last) {
+      var d = Math.abs(a.x - shake.last.x) + Math.abs(a.y - shake.last.y) + Math.abs(a.z - shake.last.z);
+      if (d > 25) {
+        var t = performance.now();
+        shake.hits.push(t);
+        shake.hits = shake.hits.filter(function (h) { return t - h < 700; });
+        if (shake.hits.length >= 3) { shake.hits = []; shakeMachine(); }
+      }
+    }
+    shake.last = { x: a.x, y: a.y, z: a.z };
+  }
+
+  // phones only: desktops have no accelerometer, so this never fires there. iOS wants to be asked
+  // from a tap, which is why it's wired up from the start button.
+  function armShake() {
+    if (shake.armed || !window.DeviceMotionEvent) return;
+    var DME = window.DeviceMotionEvent;
+    if (typeof DME.requestPermission === 'function') {
+      try {
+        DME.requestPermission().then(function (state) {
+          if (state === 'granted') { window.addEventListener('devicemotion', onMotion); shake.armed = true; }
+        }).catch(function () { /* declined: no easter egg */ });
+      } catch (e) { /* not from a gesture */ }
+    } else {
+      window.addEventListener('devicemotion', onMotion);
+      shake.armed = true;
+    }
+  }
+
   /* ------------------------------ boot ------------------------------ */
   function startGame() {
     if (started) return;
     started = true;
+    armShake();
     A.unlock();
     A.setVolume(A.settings.volume);
     A.motorStart();
@@ -1624,34 +1706,46 @@
       coins = []; shelfCoins = []; airCoins = []; gifts = [];
       generatePile(Math.round(CFG.MACHINE_START_DOLLARS / CFG.COIN_VALUE));
     }
+    // Stock with a slightly longer stroke: once we hand over, the pusher's normal stroke stops just
+    // short of the resting pile, so an idle machine can't ratchet coins off the ledge by itself.
+    pusher.reach = CFG.P_MAX + STOCK_OVERREACH;
     // A fresh pile first settles with the pusher still, then gets "played" for a while
     // (with the coins it pays out thrown away) so it starts in a lived-in, trickling state.
+    // A restored machine also runs on quietly first, so whatever was mid-push when you left
+    // finishes before you're handed the controls: nothing drops until you drop something.
     var settleFrames = restored ? 40 : 90;
     var playFrames = restored ? 0 : 840;
     var total = settleFrames + playFrames, done = 0;
     lastSettleEvent = frame;
-    // keep going past the plan until the pile has been quiet for a while (bounded)
-    var quiet = function () { return frame - lastSettleEvent > 150 || done > total + 700; };
+    // "quiet" has to outlast a full pusher stroke: coins waiting behind the shelf rows only tip at full retraction
+    var quietFrames = Math.ceil(CFG.PERIOD * 60 * 1.3);
+    var quiet = function () { return frame - lastSettleEvent > quietFrames || done > total + 1800; };
     function chunk() {
       var n = 0;
       while (n < 24 && (done < total || !quiet())) {
         var playing = done >= settleFrames;
-        // feed coins in for most of the pre-play, then let the last cycle clear the sweep zone
-        if (playing && (done - settleFrames) % 5 === 0 && done < total - 300) {
+        if (!restored && playing && (done - settleFrames) % 5 === 0 && done < total - 300) {
+          // feed coins in for most of the pre-play, then let the last cycles clear the sweep zone
           var fx = rnd(R + 4, W - R - 4), fy = rnd(CFG.P_MIN + 12, CFG.P_MAX - 24);
           var fc = makeCoin(fx, fy, 0, 0);
           fc.layer = landingLayer(fx, fy);
           fc.z = fc.layer * CFG.THICK;
           coins.push(fc);
         }
+        if (!restored && done === total - 300) { gifts = []; giftAnims = []; giftRespawnAt = 0; spawnGift('airpods'); }
         physicsStep(playing);
         done++; n++;
       }
       el.progress.style.width = Math.min(100, Math.round(100 * done / total)) + '%';
       if (done < total || !quiet()) { if (done % 96 < 24) render(performance.now()); requestAnimationFrame(chunk); return; }
       settling = false;
-      for (var i = 0; i < coins.length; i++) coins[i].settled = true;
-      if (!restored) { gifts = []; giftAnims = []; giftRespawnAt = 0; spawnGift('airpods'); }
+      pusher.reach = CFG.P_MAX;
+      // anything still inside the sweep zone would be shoved into the pile on the very first stroke,
+      // and that's exactly the "free coins" we don't want: it goes back in the bank instead
+      var keep = [];
+      for (var i = 0; i < coins.length; i++) if (coins[i].y >= CFG.P_MAX + coins[i].r + 1) keep.push(coins[i]);
+      coins = keep;
+      for (i = 0; i < coins.length; i++) coins[i].settled = true;
       render(performance.now());
       syncStack();
       updateStats();
@@ -1696,7 +1790,7 @@
     drop: dropCoin, buy: buyStack, aim: function (x) { chuteX = clamp(x, R + 1, W - R - 1); },
     count: machineCoinCount, step: physicsStep, pusher: pusher, settling: function () { return settling; },
     start: startGame, render: render, restock: function () { stock(false); },
-    gifts: function () { return gifts; }, spawnGift: spawnGift, placeGift: function (x, y) { gifts = []; var gf = makeGift('airpods', x, y, 0); gf.layer = Math.min(giftTopLayer(gf) + 1, CFG.MAX_LAYERS); gf.z = gf.layer * CFG.THICK; gifts.push(gf); return gf; },
+    gifts: function () { return gifts; }, spawnGift: spawnGift, shake: shakeMachine, placeGift: function (x, y) { gifts = []; var gf = makeGift('airpods', x, y, 0); gf.layer = Math.min(giftTopLayer(gf) + 1, CFG.MAX_LAYERS); gf.z = gf.layer * CFG.THICK; gifts.push(gf); return gf; },
     _state: function () { return { shelf: shelfCoins, air: airCoins, payouts: payouts, losts: losts, layers: layers }; }
   };
 })();

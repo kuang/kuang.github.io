@@ -328,6 +328,15 @@ window.ArcadeAudio = (function () {
     }
   }
 
+  // the whole cabinet rattling: a low rumble and a scatter of coins
+  function rumble() {
+    if (!ctx) return;
+    var t = now() + 0.005;
+    noise({ t: t, dur: 0.6, filter: 'lowpass', freq: 260, gain: 0.45, attack: 0.02 });
+    osc({ type: 'sawtooth', freq: 38, slideTo: 24, slideTime: 0.6, t: t, dur: 0.55, gain: 0.18, attack: 0.02 });
+    for (var i = 0; i < 14; i++) metal(t + Math.random() * 0.5, 1800 + Math.random() * 1400, 0.08, 0.1);
+  }
+
   // the pusher reaching the end of its stroke: a soft mechanical clunk
   function motorClunk(soft) {
     if (!ctx) return;
@@ -555,6 +564,7 @@ window.ArcadeAudio = (function () {
     click: click,
     fanfare: fanfare,
     thud: thud,
+    rumble: rumble,
     prize: prize,
     motorClunk: motorClunk,
     motorStart: motorStart,

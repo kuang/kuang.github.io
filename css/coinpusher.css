@@ -134,6 +134,15 @@ body {
     inset 0 0 30px rgba(0, 0, 0, 0.5);
 }
 
+/* easter egg: shake your phone and the whole cabinet rattles */
+.screen-wrap.shake { animation: machineShake 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes machineShake {
+  10%, 90% { transform: translate3d(-2px, 1px, 0) rotate(-0.3deg); }
+  20%, 80% { transform: translate3d(4px, -2px, 0) rotate(0.4deg); }
+  30%, 50%, 70% { transform: translate3d(-7px, 3px, 0) rotate(-0.6deg); }
+  40%, 60% { transform: translate3d(7px, -3px, 0) rotate(0.6deg); }
+}
+
 canvas#game {
   display: block;
   width: 100%;
