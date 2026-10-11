@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A whimsical arcade coin pusher built with nothing but HTML, CSS and JavaScript. Buy a stack of quarters, drop them one by one, and win them back." />
+  <meta name="author" content="Justin Kuang" />
+  <script type="text/javascript">
+    var host = "justinkuang.com";
+    if (host == window.location.host && window.location.protocol != "https:")
+      window.location.protocol = "https";
+  </script>
+  <link rel="canonical" href="https://justinkuang.com/coinpusher.html">
+  <link rel="icon" href="favicon.ico">
+  <title>Coin Pusher · Justin Kuang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/coinpusher.css">
+</head>
+
+<body>
+  <div class="arcade">
+    <header class="marquee">
+      <h1>COIN PUSHER</h1>
+      <p class="tagline">★ one quarter at a time ★</p>
+    </header>
+
+    <main class="cabinet">
+      <div class="screen-wrap">
+        <canvas id="game" width="960" height="570" aria-label="Coin pusher playfield"></canvas>
+
+        <div id="overlay" class="overlay">
+          <div class="title">STOCKING THE MACHINE…</div>
+          <div class="progress"><i id="progressBar"></i></div>
+          <button id="startBtn" class="btn start" hidden>TAP TO START</button>
+          <p id="overlayHint">Sound on. Headphones recommended. The machine starts loaded with about $1,000 in quarters.</p>
+        </div>
+
+        <div id="toast" class="toast"></div>
+      </div>
+
+      <aside class="panel">
+        <div class="stat big">
+          <span class="label">YOUR STACK</span>
+          <span id="stackCount" class="value">0</span>
+          <span class="sub">quarters</span>
+        </div>
+
+        <div id="stackViz" class="stack-viz" aria-hidden="true">
+          <div class="felt"></div>
+          <div id="stackEmpty" class="empty">INSERT COIN</div>
+        </div>
+
+        <button id="buyBtn" class="btn buy">BUY STACK<small>$10 · 40 quarters</small></button>
+
+        <div class="stats">
+          <div><span>spent</span><b id="spent">$0.00</b></div>
+          <div><span>won</span><b id="won">0</b></div>
+          <div><span>net</span><b id="net">$0.00</b></div>
+          <div><span>in machine</span><b id="machine">$0</b></div>
+          <div><span>house took</span><b id="lost">0</b></div>
+          <div><span>best drop</span><b id="best">0</b></div>
+        </div>
+
+        <div class="controls">
+          <label><input type="checkbox" id="musicToggle" checked> music</label>
+          <label><input type="checkbox" id="sfxToggle" checked> sfx</label>
+          <label class="vol">vol <input type="range" id="volume" min="0" max="100" value="70"></label>
+          <button id="resetBtn" class="btn small">RESET MACHINE</button>
+        </div>
+
+        <p class="hint">
+          aim with the mouse or <kbd>←</kbd> <kbd>→</kbd> · drop with a click or <kbd>SPACE</kbd> · hold to rapid-fire · <kbd>B</kbd> buys a stack
+        </p>
+      </aside>
+    </main>
+
+    <footer>
+      built with plain html, css &amp; js · <a href="index.html">← back home</a>
+    </footer>
+  </div>
+
+  <script src="js/coinpusher-audio.js"></script>
+  <script src="js/coinpusher.js"></script>
+  <script data-goatcounter="https://kuang.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+
+</html>
