@@ -303,6 +303,31 @@ window.ArcadeAudio = (function () {
     }
   }
 
+  // something heavier than a quarter landing: the prize box
+  function thud(vol) {
+    if (!ctx) return;
+    var t = now() + 0.005;
+    vol = vol || 1;
+    noise({ t: t, dur: 0.1, filter: 'lowpass', freq: 380, gain: 0.3 * vol });
+    osc({ type: 'sine', freq: 120, slideTo: 45, slideTime: 0.12, t: t, dur: 0.16, gain: 0.3 * vol });
+  }
+
+  // you won the prize: fanfare, then a big ta-da chord
+  function prize() {
+    if (!ctx) return;
+    fanfare(3);
+    var t = now() + 0.5;
+    var chord = [60, 64, 67, 72, 76, 79];
+    for (var i = 0; i < chord.length; i++) {
+      var f = midiToHz(chord[i]);
+      osc({ wave: pulse25, freq: f, t: t, dur: 1.1, gain: 0.05, attack: 0.01, sustain: 0.7, decay: 0.2, release: 0.3 });
+      osc({ type: 'triangle', freq: f * 2, t: t, dur: 1.1, gain: 0.03, attack: 0.01, sustain: 0.6, decay: 0.2, release: 0.3 });
+    }
+    for (var k = 0; k < 16; k++) {
+      osc({ type: 'sine', freq: 2500 + Math.random() * 5000, t: t + 0.1 + k * 0.05, dur: 0.25, gain: 0.03, attack: 0.001 });
+    }
+  }
+
   // the pusher reaching the end of its stroke: a soft mechanical clunk
   function motorClunk(soft) {
     if (!ctx) return;
@@ -529,6 +554,8 @@ window.ArcadeAudio = (function () {
     buzz: buzz,
     click: click,
     fanfare: fanfare,
+    thud: thud,
+    prize: prize,
     motorClunk: motorClunk,
     motorStart: motorStart,
     motorStop: motorStop,

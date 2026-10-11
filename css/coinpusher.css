@@ -412,6 +412,7 @@ canvas#game {
   font-size: 12px;
   color: #fff;
 }
+.stats > div.wide { grid-column: 1 / -1; }
 .stats b.pos { color: var(--neon-green); text-shadow: 0 0 8px rgba(93,255,138,0.6); }
 .stats b.neg { color: var(--neon-pink); text-shadow: 0 0 8px rgba(255,62,201,0.6); }
 

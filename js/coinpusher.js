@@ -14,7 +14,7 @@
     COIN_VALUE: 0.25,            // quarters
     STACK_PRICE: 10,             // dollars per stack
     STACK_COINS: 40,             // quarters per stack
-    MACHINE_START_DOLLARS: 1000, // how loaded the machine is at the start (~100 stacks)
+    MACHINE_START_DOLLARS: 500,  // how loaded the machine is at the start (~50 stacks)
 
     W: 800,                      // playfield width (world units)
     D: 520,                      // playfield depth; y=0 is the back wall, y=D the front ledge
@@ -22,14 +22,15 @@
     THICK: 2.6,                  // coin thickness (z units)
     MAX_LAYERS: 5,               // how deep the pile can stack
 
-    P_MIN: 3,                    // pusher front edge when fully retracted (must be < R so wall-blocked coins tip off)
-    P_MAX: 104,                  // pusher front edge when fully extended
-    PERIOD: 3.0,                 // seconds for one back-and-forth
-    SHELF_H: 14,                 // pusher shelf height above the playfield
+    P_MIN: 46,                   // pusher front edge when fully retracted: room for SHELF_ROWS rows of resident coins
+    P_MAX: 160,                  // pusher front edge when fully extended
+    SHELF_ROWS: 3,               // rows of coins that live on the shelf; anything behind them tips off each stroke
+    PERIOD: 4.5,                 // seconds for one back-and-forth
+    SHELF_H: 22,                 // pusher shelf height above the playfield
     WALL_H: 70,                  // back wall height
-    CHUTE_Y: 40,                 // depth where a dropped coin lands
+    CHUTE_Y: 72,                 // depth where a dropped coin lands (on the shelf when it's out, on the floor when it's back)
     GUTTER_FROM: 0.72,           // side gutters are open from this fraction of depth to the ledge
-    TRAY_DROP: 30,               // how far the ledge drops into the payout tray
+    TRAY_DROP: 36,               // how far the ledge drops into the payout tray
 
     FRICTION: 0.76,
     SUPPORT_R: 1.35,             // × R: max distance to a coin below that still supports you
@@ -54,7 +55,7 @@
   var sparks = [];       // confetti for big wins
   var floaters = [];     // "+1" floating labels
   var layers = [];       // per-layer coin lists, rebuilt every physics step
-  var econ = { stack: 0, spent: 0, won: 0, lost: 0, best: 0, played: 0 };
+  var econ = { stack: 0, spent: 0, won: 0, lost: 0, best: 0, played: 0, prizes: {} };
   var pusher = { front: CFG.P_MAX, prevFront: CFG.P_MAX, dy: 0, dir: -1, t: CFG.PERIOD / 2 };
   var chuteX = W / 2;
   var settling = true, running = false, started = false;
@@ -77,7 +78,7 @@
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
 
   // Pseudo-perspective: things get a little bigger toward the front edge.
-  var VIEW = { cx: CW / 2, top: 122, sBack: 0.86, sFront: 1.14, sy: 0.64, sz: 0.95 };
+  var VIEW = { cx: CW / 2, top: 122, sBack: 0.86, sFront: 1.14, sy: 0.70, sz: 0.95 };
   function scaleAt(y) { return VIEW.sBack + (VIEW.sFront - VIEW.sBack) * (y / D); }
   function screenY(y) {
     var a = VIEW.sBack, b = VIEW.sFront - VIEW.sBack;
@@ -223,6 +224,15 @@
     coins = [];
     shelfCoins = [];
     airCoins = [];
+    // the rows that ride on the shelf: the back wall holds them, so they never tip off,
+    // and any coin that lands behind them gets shoved over the shelf's edge each stroke
+    for (var sr = 0; sr < CFG.SHELF_ROWS; sr++) {
+      var sy = R + sr * R2 * 0.96;
+      for (var sx = R + 1 + (sr % 2) * R; sx <= W - R - 1; sx += R2 * 1.01) {
+        shelfCoins.push(makeCoin(sx + rnd(-0.6, 0.6), sy + rnd(-0.6, 0.6), 0, CFG.SHELF_H));
+      }
+    }
+    target -= shelfCoins.length;
     var y0 = CFG.P_MAX + R + 3;
     var yEnd = D - R * 0.3;      // the front row teeters near the ledge, like a machine that's been played
     var spots = [];
@@ -414,6 +424,16 @@
         c.passedShelf = true;
       }
       if (c.passedShelf) {
+        var gf = giftUnder(c.x, c.y, c.r * 0.6);
+        if (gf && c.z <= gf.z + gf.h) {
+          // clonk: off the top of the prize box and over its nearest edge
+          var ddx = c.x - gf.x, ddy = c.y - gf.y;
+          if (gf.w / 2 - Math.abs(ddx) < gf.d / 2 - Math.abs(ddy)) c.x = gf.x + (ddx < 0 ? -1 : 1) * (gf.w / 2 + c.r);
+          else c.y = gf.y + (ddy < 0 ? -1 : 1) * (gf.d / 2 + c.r);
+          c.vz = Math.max(c.vz * -0.3, 0.6);
+          c.vx += rnd(-0.5, 0.5);
+          if (!settling) A.thud(0.5);
+        }
         var L = landingLayer(c.x, c.y);
         var floor = L * CFG.THICK;
         if (c.z <= floor) {
@@ -457,8 +477,16 @@
         }
       }
     }
-    for (var it = 0; it < 2; it++) {
-      for (i = 0; i < shelfCoins.length; i++) for (j = i + 1; j < shelfCoins.length; j++) resolve(shelfCoins[i], shelfCoins[j]);
+    shelfCoins.sort(byY);
+    for (var it = 0; it < 4; it++) {
+      for (i = 0; i < shelfCoins.length; i++) {
+        var ai = shelfCoins[i];
+        for (j = i + 1; j < shelfCoins.length; j++) {
+          var bj = shelfCoins[j];
+          if (bj.y - ai.y > R2 * 1.1) break;
+          resolve(ai, bj);
+        }
+      }
       for (i = 0; i < shelfCoins.length; i++) {
         c = shelfCoins[i];
         if (c.y < c.r) c.y = c.r;
@@ -574,6 +602,151 @@
     if (n > 0) { c.x += sx / n; c.y += sy / n; }
   }
 
+  /* ------------------------------ gifts: prizes riding on top of the pile ------------------------------ */
+  var GIFT_KINDS = {
+    airpods: { w: 54, d: 38, h: 20, label: 'AIRPODS', shout: 'YOU WON AIRPODS!', name: 'AirPods' }
+  };
+  var gifts = [];
+  var giftAnims = [];        // prizes tumbling into the tray or the gutter
+  var giftRespawnAt = 0;     // frame at which a fresh prize gets set on the pile (0 = none pending)
+
+  function makeGift(kind, x, y, layer) {
+    var k = GIFT_KINDS[kind];
+    return { kind: kind, x: x, y: y, px: x, py: y, w: k.w, d: k.d, h: k.h, layer: layer || 0, z: (layer || 0) * CFG.THICK, vz: 0, wob: Math.random() * 6.28 };
+  }
+
+  // visit live coins on one layer grid whose centres fall inside the box footprint (grown by `pad`)
+  function eachInFootprint(gf, cells, pad, fn) {
+    var hw = gf.w / 2 + pad, hd = gf.d / 2 + pad;
+    var c0 = cellIndex(gf.x - hw, gf.y - hd), c1 = cellIndex(gf.x + hw, gf.y + hd);
+    var cx0 = c0 % GCOLS, cy0 = (c0 - cx0) / GCOLS, cx1 = c1 % GCOLS, cy1 = (c1 - cx1) / GCOLS;
+    for (var cy = cy0; cy <= cy1; cy++) {
+      for (var cx = cx0; cx <= cx1; cx++) {
+        var cell = cells[cy * GCOLS + cx];
+        for (var k = 0; k < cell.length; k++) {
+          var b = cell[k];
+          if (b.dead) continue;
+          if (Math.abs(b.x - gf.x) < hw && Math.abs(b.y - gf.y) < hd) fn(b);
+        }
+      }
+    }
+  }
+
+  function giftTopLayer(gf) {
+    for (var L = CFG.MAX_LAYERS - 1; L >= 0; L--) {
+      var hit = false;
+      eachInFootprint(gf, grids[L], R * 0.5, function () { hit = true; });
+      if (hit) return L;
+    }
+    return -1;
+  }
+
+  function giftUnder(x, y, pad) {
+    for (var i = 0; i < gifts.length; i++) {
+      var gf = gifts[i];
+      if (Math.abs(x - gf.x) < gf.w / 2 + pad && Math.abs(y - gf.y) < gf.d / 2 + pad) return gf;
+    }
+    return null;
+  }
+
+  function spawnGift(kind) {
+    var gf = makeGift(kind, rnd(W * 0.3, W * 0.7), D - 120 + rnd(-15, 15), 0);
+    gf.layer = Math.min(giftTopLayer(gf) + 1, CFG.MAX_LAYERS);
+    gf.z = gf.layer * CFG.THICK + 30;   // set down from above
+    gf.vz = 0;
+    gifts.push(gf);
+  }
+
+  // a coin level with the box can't pass through it, and nudges it a little
+  function pushCoinOutOfBox(gf, b) {
+    var hw = gf.w / 2, hd = gf.d / 2;
+    var cx = clamp(b.x, gf.x - hw, gf.x + hw), cy = clamp(b.y, gf.y - hd, gf.y + hd);
+    var dx = b.x - cx, dy = b.y - cy;
+    var d2 = dx * dx + dy * dy;
+    if (d2 >= b.r * b.r) return;
+    var nx, ny, push;
+    if (d2 > 1e-6) {
+      var d = Math.sqrt(d2);
+      nx = dx / d; ny = dy / d; push = b.r - d;
+    } else {
+      // centre inside the box: leave by the nearest side
+      var l = b.x - (gf.x - hw), r = (gf.x + hw) - b.x, t = b.y - (gf.y - hd), bt = (gf.y + hd) - b.y;
+      var m = Math.min(l, r, t, bt);
+      nx = m === l ? -1 : m === r ? 1 : 0;
+      ny = nx ? 0 : (m === t ? -1 : 1);
+      push = m + b.r;
+    }
+    b.x += nx * push * 0.8; b.y += ny * push * 0.8;
+    gf.x -= nx * push * 0.2; gf.y -= ny * push * 0.2;
+  }
+
+  function stepGifts() {
+    var front = pusher.front;
+    for (var i = gifts.length - 1; i >= 0; i--) {
+      var gf = gifts[i];
+      gf.px = gf.x; gf.py = gf.y;
+      var hw = gf.w / 2, hd = gf.d / 2;
+      if (gf.layer > 0) {
+        // rides on the coins underneath; drops a layer when they're gone
+        var sx = 0, sy = 0, n = 0;
+        eachInFootprint(gf, grids[gf.layer - 1], R * 0.5, function (b) { sx += b.x - b.px; sy += b.y - b.py; n++; });
+        if (n > 0) { gf.x += sx / n; gf.y += sy / n; }
+        else { gf.layer--; if (gf.vz === 0) gf.vz = -0.01; }
+      }
+      if (gf.y - hd < front) gf.y = front + hd;
+      if (gf.y - hd < GUTTER_Y) gf.x = clamp(gf.x, hw, W - hw);
+      var floor = gf.layer * CFG.THICK;
+      if (gf.z > floor || gf.vz !== 0) {
+        gf.vz -= CFG.GRAV;
+        gf.z += gf.vz;
+        if (gf.z <= floor) {
+          gf.z = floor;
+          if (gf.vz < -1.2 && !settling) A.thud(1);
+          gf.vz = 0;
+        }
+      } else if (gf.z < floor) gf.z = floor;
+      for (var L = Math.min(gf.layer, CFG.MAX_LAYERS - 1); L < CFG.MAX_LAYERS; L++) {
+        if (L < gf.layer) continue;
+        eachInFootprint(gf, grids[L], R, function (b) { pushCoinOutOfBox(gf, b); });
+      }
+      if (gf.y > D + hd * 0.2) { winGift(gf, i); continue; }
+      if (gf.y > GUTTER_Y && (gf.x < -hw * 0.2 || gf.x > W + hw * 0.2)) loseGift(gf, i);
+    }
+    if (giftRespawnAt && frame >= giftRespawnAt && !settling) {
+      giftRespawnAt = 0;
+      spawnGift('airpods');
+      toast('NEW PRIZE!');
+    }
+  }
+
+  function winGift(gf, i) {
+    gifts.splice(i, 1);
+    if (settling) return;
+    var k = GIFT_KINDS[gf.kind];
+    giftAnims.push({ kind: gf.kind, sx: px(gf.x, gf.y), sy: py(gf.y, gf.z), s: scaleAt(gf.y), vx: rnd(-0.3, 0.3), vy: 0.4, rot: 0, vrot: rnd(-0.08, 0.08), floor: TRAY_SY + 26, alpha: 1, landed: false, life: 0 });
+    econ.prizes[gf.kind] = (econ.prizes[gf.kind] || 0) + 1;
+    statsDirty = true;
+    toast(k.shout);
+    A.prize();
+    for (var j = 0; j < 160; j++) {
+      sparks.push({ x: CW / 2 + rnd(-300, 300), y: LEDGE_SY + rnd(-20, 30), vx: rnd(-4, 4), vy: rnd(-9, -2), life: 60 + Math.random() * 50, color: ['#ffe14d', '#ff3ec9', '#38f3ff', '#5dff8a', '#ffffff'][j % 5] });
+    }
+    giftRespawnAt = frame + 60 * 45;
+    saveSoon();
+  }
+
+  function loseGift(gf, i) {
+    gifts.splice(i, 1);
+    if (settling) return;
+    var side = gf.x < W / 2 ? -1 : 1;
+    giftAnims.push({ kind: gf.kind, sx: px(gf.x, gf.y), sy: py(gf.y, gf.z), s: scaleAt(gf.y), vx: side * 1.4, vy: 0.3, rot: 0, vrot: side * 0.06, floor: 1e9, alpha: 1, landed: false, life: 0 });
+    toast('THE HOUSE KEEPS THE ' + GIFT_KINDS[gf.kind].label);
+    A.coinLost(0);
+    A.buzz();
+    giftRespawnAt = frame + 60 * 30;
+    saveSoon();
+  }
+
   /* ------------------------------ winning & losing coins ------------------------------ */
   var lastSettleEvent = 0;   // last frame a coin left the machine during stocking
 
@@ -652,6 +825,17 @@
       p.life--;
       if (p.life <= 0) sparks.splice(i, 1);
     }
+    for (i = giftAnims.length - 1; i >= 0; i--) {
+      p = giftAnims[i];
+      p.life++;
+      if (!p.landed) {
+        p.vy += 0.4;
+        p.sy += p.vy; p.sx += p.vx; p.rot += p.vrot;
+        if (p.sy >= p.floor) { p.sy = p.floor; p.landed = true; p.vy = 0; }
+        if (p.floor > 1e8 && p.life > 50) p.alpha -= 0.05;
+      } else if (p.life > 70) p.alpha -= 0.03;
+      if (p.alpha <= 0) giftAnims.splice(i, 1);
+    }
     if (combo.count > 0 && performance.now() > combo.until) {
       finishCombo(combo.count);
       combo.count = 0;
@@ -680,6 +864,7 @@
     stepAir();
     stepShelf();
     stepField();
+    stepGifts();
     stepAnims();
     frame++;
   }
@@ -709,9 +894,11 @@
     drawRails();
     drawShelf();
     drawFieldCoins();
+    drawGifts(now);
     drawLedgeAndTray();
     drawPayouts();
     drawLosts();
+    drawGiftAnims();
     drawAirCoins();
     drawChute(now);
     drawSparks();
@@ -796,6 +983,14 @@
     // the sweep zone in front of the pusher is a touch lighter
     g.fillStyle = 'rgba(255,255,255,0.05)';
     quad(px(0, 0), py(0, 0), px(W, 0), py(0, 0), px(W, CFG.P_MAX), py(CFG.P_MAX, 0), px(0, CFG.P_MAX), py(CFG.P_MAX, 0));
+    g.fill();
+    // the last stretch before the drop glows a little: coins in here are about to go
+    var zy = D - 28;
+    var zone = g.createLinearGradient(0, py(zy, 0), 0, py(D, 0));
+    zone.addColorStop(0, 'rgba(255,225,77,0)');
+    zone.addColorStop(1, 'rgba(255,225,77,0.28)');
+    g.fillStyle = zone;
+    quad(px(0, zy), py(zy, 0), px(W, zy), py(zy, 0), px(W, D), py(D, 0), px(0, D), py(D, 0));
     g.fill();
   }
 
@@ -908,6 +1103,100 @@
     }
   }
 
+  // the prize box: a white AirPods box with its lid logo, and a bobbing tag so you can't miss it
+  function drawGiftBox(x, y, z, w, d, h, s, rot) {
+    // x, y: world centre; drawn with the playfield projection unless `s` is given (screen-space fall)
+    var hw = w / 2, hd = d / 2;
+    var ax, ay, bx, by, cx, cy, dx, dy, fy;
+    if (s == null) {
+      var yt = y - hd, yb = y + hd, z1 = z + h;
+      ax = px(x - hw, yt); ay = py(yt, z1); bx = px(x + hw, yt); by = py(yt, z1);
+      cx = px(x + hw, yb); cy = py(yb, z1); dx = px(x - hw, yb); dy = py(yb, z1);
+      fy = py(yb, z);
+    } else {
+      var sw = hw * s, sd = hd * s * VIEW.sy, sh = h * s * VIEW.sz;
+      g.save(); g.translate(x, y); g.rotate(rot || 0);
+      ax = -sw; ay = -sd - sh; bx = sw; by = -sd - sh; cx = sw; cy = sd - sh; dx = -sw; dy = sd - sh; fy = sd;
+    }
+    // front face
+    g.fillStyle = '#d9dbe3';
+    quad(dx, dy, cx, cy, cx, fy, dx, fy);
+    g.fill();
+    g.fillStyle = '#c3c6d1';
+    g.fillRect(dx, dy, cx - dx, 1.5);
+    // top face
+    var top = g.createLinearGradient(ax, ay, dx, dy);
+    top.addColorStop(0, '#ffffff');
+    top.addColorStop(1, '#eceef3');
+    g.fillStyle = top;
+    quad(ax, ay, bx, by, cx, cy, dx, dy);
+    g.fill();
+    g.strokeStyle = 'rgba(120,125,140,0.55)';
+    g.lineWidth = 1;
+    g.stroke();
+    // the case on the lid
+    var mx = (ax + bx + cx + dx) / 4, my = (ay + by + cy + dy) / 4;
+    var cw = (bx - ax) * 0.3, ch = (dy - ay) * 0.46;
+    g.fillStyle = '#e4e6ec';
+    g.strokeStyle = '#b9bcc8';
+    g.beginPath();
+    g.roundRect ? g.roundRect(mx - cw / 2, my - ch / 2, cw, ch, 3) : g.rect(mx - cw / 2, my - ch / 2, cw, ch);
+    g.fill();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(mx - cw / 2, my - ch * 0.1);
+    g.lineTo(mx + cw / 2, my - ch * 0.1);
+    g.stroke();
+    g.fillStyle = '#5dff8a';
+    g.fillRect(mx - 1, my + ch * 0.12, 2, 1.5);
+    // front label
+    g.font = '6px ' + PIXEL_FONT;
+    g.fillStyle = '#2b2d36';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('AirPods', (dx + cx) / 2, (dy + fy) / 2 + 0.5);
+    if (s != null) g.restore();
+  }
+
+  function drawGifts(now) {
+    for (var i = 0; i < gifts.length; i++) {
+      var gf = gifts[i];
+      var floor = gf.layer * CFG.THICK;
+      if (gf.z > floor + 0.5) {
+        g.fillStyle = 'rgba(0,0,0,0.3)';
+        quad(px(gf.x - gf.w / 2, gf.y - gf.d / 2), py(gf.y - gf.d / 2, floor), px(gf.x + gf.w / 2, gf.y - gf.d / 2), py(gf.y - gf.d / 2, floor), px(gf.x + gf.w / 2, gf.y + gf.d / 2), py(gf.y + gf.d / 2, floor), px(gf.x - gf.w / 2, gf.y + gf.d / 2), py(gf.y + gf.d / 2, floor));
+        g.fill();
+      }
+      drawGiftBox(gf.x, gf.y, gf.z, gf.w, gf.d, gf.h, null, 0);
+      // tag
+      var bob = Math.sin((now || 0) / 260 + gf.wob) * 2;
+      var tx = px(gf.x, gf.y), ty = py(gf.y, gf.z + gf.h) - 16 + bob;
+      g.font = '8px ' + PIXEL_FONT;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillStyle = '#ffe14d';
+      g.shadowColor = '#ff3ec9';
+      g.shadowBlur = 10;
+      g.fillText('\u2726 ' + GIFT_KINDS[gf.kind].label + ' \u2726', tx, ty);
+      g.shadowBlur = 0;
+      g.fillStyle = 'rgba(255,225,77,0.9)';
+      g.beginPath();
+      g.moveTo(tx - 4, ty + 7); g.lineTo(tx + 4, ty + 7); g.lineTo(tx, ty + 12);
+      g.closePath();
+      g.fill();
+    }
+  }
+
+  function drawGiftAnims() {
+    for (var i = 0; i < giftAnims.length; i++) {
+      var p = giftAnims[i];
+      var k = GIFT_KINDS[p.kind];
+      g.globalAlpha = Math.max(0, p.alpha);
+      drawGiftBox(p.sx, p.sy, 0, k.w, k.d, k.h, p.s, p.rot);
+    }
+    g.globalAlpha = 1;
+  }
+
   function drawLedgeAndTray() {
     var x0 = px(0, D), x1 = px(W, D);
     var yTop = py(D, 0), yBot = py(D, -CFG.TRAY_DROP);
@@ -917,8 +1206,28 @@
     face.addColorStop(1, '#1b1e30');
     g.fillStyle = face;
     g.fillRect(x0 - 16, yTop, x1 - x0 + 32, yBot - yTop);
-    g.fillStyle = 'rgba(255,255,255,0.5)';
-    g.fillRect(x0, yTop - 1, x1 - x0, 1.5);
+    // hazard stripes along the top of the drop
+    var bandH = Math.min(12, (yBot - yTop) * 0.4);
+    g.save();
+    g.beginPath();
+    g.rect(x0 - 16, yTop, x1 - x0 + 32, bandH);
+    g.clip();
+    g.fillStyle = '#f4c531';
+    g.fillRect(x0 - 16, yTop, x1 - x0 + 32, bandH);
+    g.fillStyle = '#15131f';
+    for (var hx = x0 - 40; hx < x1 + 40; hx += 24) {
+      quad(hx, yTop, hx + 12, yTop, hx + 12 - bandH, yTop + bandH, hx - bandH, yTop + bandH);
+      g.fill();
+    }
+    g.restore();
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.fillRect(x0 - 16, yTop + bandH, x1 - x0 + 32, 1.5);
+    // the lip itself, bright and glowing, so the edge is unmistakable
+    g.shadowColor = '#ffe14d';
+    g.shadowBlur = 10;
+    g.fillStyle = '#fff6c2';
+    g.fillRect(x0 - 16, yTop - 2, x1 - x0 + 32, 3);
+    g.shadowBlur = 0;
 
     // the payout tray
     var trayTop = TRAY_SY, trayH = 54;
@@ -1036,7 +1345,7 @@
     progress: $('progressBar'), startBtn: $('startBtn'), toast: $('toast'),
     stackCount: $('stackCount'), stackViz: $('stackViz'), stackEmpty: $('stackEmpty'),
     buyBtn: $('buyBtn'), resetBtn: $('resetBtn'),
-    spent: $('spent'), won: $('won'), net: $('net'), machine: $('machine'), lost: $('lost'), best: $('best'),
+    spent: $('spent'), won: $('won'), net: $('net'), machine: $('machine'), lost: $('lost'), best: $('best'), prizes: $('prizes'),
     musicToggle: $('musicToggle'), sfxToggle: $('sfxToggle'), volume: $('volume')
   };
 
@@ -1083,6 +1392,9 @@
     el.machine.textContent = '$' + (machineCoinCount() * CFG.COIN_VALUE).toFixed(0);
     el.lost.textContent = econ.lost;
     el.best.textContent = econ.best;
+    var won = [];
+    for (var kind in econ.prizes) if (econ.prizes[kind] > 0 && GIFT_KINDS[kind]) won.push(GIFT_KINDS[kind].name + ' \u00d7' + econ.prizes[kind]);
+    el.prizes.textContent = won.length ? won.join(', ') : 'none yet';
   }
 
   function toast(text) {
@@ -1141,7 +1453,9 @@
         stackInFlight: airCoins.length,
         t: pusher.t,
         coins: coins.map(pack),
-        shelf: shelfCoins.map(function (c) { return [Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, 0, Math.round(c.r * 100) / 100, Math.round(c.tip * 100) / 100]; })
+        shelf: shelfCoins.map(function (c) { return [Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, 0, Math.round(c.r * 100) / 100, Math.round(c.tip * 100) / 100]; }),
+        gifts: gifts.map(function (gf) { return [gf.kind, Math.round(gf.x * 10) / 10, Math.round(gf.y * 10) / 10, gf.layer]; }),
+        giftRespawnIn: giftRespawnAt ? Math.max(0, giftRespawnAt - frame) : 0
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     } catch (e) { /* storage unavailable: play without saving */ }
@@ -1160,7 +1474,11 @@
       if (!data || !data.coins || !data.coins.length) return false;
       var k;
       for (k in econ) if (typeof data.econ[k] === 'number') econ[k] = data.econ[k];
+      econ.prizes = (data.econ && data.econ.prizes && typeof data.econ.prizes === 'object') ? data.econ.prizes : {};
       econ.stack += data.stackInFlight || 0;
+      gifts = (data.gifts || []).filter(function (a) { return GIFT_KINDS[a[0]]; }).map(function (a) { return makeGift(a[0], a[1], a[2], clamp(a[3] | 0, 0, CFG.MAX_LAYERS)); });
+      giftAnims = [];
+      giftRespawnAt = data.giftRespawnIn ? frame + data.giftRespawnIn : (gifts.length ? 0 : frame + 60 * 5);
       coins = data.coins.map(function (a) { return makeCoin(a[0], a[1], clamp(a[2] | 0, 0, CFG.MAX_LAYERS - 1), null, a[3], a[4]); });
       shelfCoins = (data.shelf || []).map(function (a) { return makeCoin(a[0], a[1], 0, CFG.SHELF_H, a[3], a[4]); });
       airCoins = [];
@@ -1260,7 +1578,8 @@
     if (!window.confirm('Reset the machine and your stack? This starts over from a fresh load of coins.')) return;
     A.click();
     clearSave();
-    econ = { stack: 0, spent: 0, won: 0, lost: 0, best: 0, played: 0 };
+    econ = { stack: 0, spent: 0, won: 0, lost: 0, best: 0, played: 0, prizes: {} };
+    gifts = []; giftAnims = []; giftRespawnAt = 0;
     payouts = []; losts = []; sparks = []; floaters = [];
     combo.count = 0;
     pusher.t = CFG.PERIOD / 2;
@@ -1303,7 +1622,7 @@
 
     var restored = tryRestore && load();
     if (!restored) {
-      coins = []; shelfCoins = []; airCoins = [];
+      coins = []; shelfCoins = []; airCoins = []; gifts = [];
       generatePile(Math.round(CFG.MACHINE_START_DOLLARS / CFG.COIN_VALUE));
     }
     // A fresh pile first settles with the pusher still, then gets "played" for a while
@@ -1320,7 +1639,7 @@
         var playing = done >= settleFrames;
         // feed coins in for most of the pre-play, then let the last cycle clear the sweep zone
         if (playing && (done - settleFrames) % 5 === 0 && done < total - 300) {
-          var fx = rnd(R + 4, W - R - 4), fy = rnd(16, 70);
+          var fx = rnd(R + 4, W - R - 4), fy = rnd(CFG.P_MIN + 12, CFG.P_MAX - 24);
           var fc = makeCoin(fx, fy, 0, 0);
           fc.layer = landingLayer(fx, fy);
           fc.z = fc.layer * CFG.THICK;
@@ -1333,6 +1652,7 @@
       if (done < total || !quiet()) { if (done % 96 < 24) render(performance.now()); requestAnimationFrame(chunk); return; }
       settling = false;
       for (var i = 0; i < coins.length; i++) coins[i].settled = true;
+      if (!restored) { gifts = []; giftAnims = []; giftRespawnAt = 0; spawnGift('airpods'); }
       render(performance.now());
       syncStack();
       updateStats();
@@ -1376,6 +1696,8 @@
     cfg: CFG, econ: function () { return econ; }, coins: function () { return coins; },
     drop: dropCoin, buy: buyStack, aim: function (x) { chuteX = clamp(x, R + 1, W - R - 1); },
     count: machineCoinCount, step: physicsStep, pusher: pusher, settling: function () { return settling; },
-    start: startGame, render: render, restock: function () { stock(false); }, _state: function () { return { shelf: shelfCoins, air: airCoins, payouts: payouts, losts: losts, layers: layers }; }
+    start: startGame, render: render, restock: function () { stock(false); },
+    gifts: function () { return gifts; }, spawnGift: spawnGift, placeGift: function (x, y) { gifts = []; var gf = makeGift('airpods', x, y, 0); gf.layer = Math.min(giftTopLayer(gf) + 1, CFG.MAX_LAYERS); gf.z = gf.layer * CFG.THICK; gifts.push(gf); return gf; },
+    _state: function () { return { shelf: shelfCoins, air: airCoins, payouts: payouts, losts: losts, layers: layers }; }
   };
 })();
