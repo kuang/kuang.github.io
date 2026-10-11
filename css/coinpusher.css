@@ -279,21 +279,6 @@ canvas#game {
   100% { opacity: 0; transform: translate(-50%, -90%) scale(1.1); }
 }
 
-/* a won quarter on its way from the tray to your stack */
-.fly-coin {
-  position: fixed;
-  z-index: 50;
-  width: 24px;
-  height: 15px;
-  margin: -8px 0 0 -12px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 40% 35%, #ffffff 0, #d9dbe3 35%, #9ea3b3 70%, #6c7183 100%);
-  box-shadow: 0 2px 0 #5d6172, 0 0 12px rgba(255, 225, 77, 0.75);
-  transition: transform 0.55s cubic-bezier(0.25, 0.8, 0.35, 1.08);
-  will-change: transform;
-}
-
 /* ------------------------------ side panel ------------------------------ */
 .panel {
   display: flex;
