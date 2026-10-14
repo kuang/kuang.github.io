@@ -22,13 +22,13 @@
     THICK: 2.6,                  // coin thickness (z units)
     MAX_LAYERS: 5,               // how deep the pile can stack
 
-    P_MIN: 46,                   // pusher front edge when fully retracted: just covers the SHELF_ROWS resident rows
-    P_MAX: 160,                  // pusher front edge when fully extended
-    SHELF_ROWS: 3,               // rows of coins that live on the shelf; anything behind them tips off each stroke
+    P_MIN: 58,                   // pusher front edge when fully retracted: the platform holds ~4 rows of coins
+    P_MAX: 170,                  // pusher front edge when fully extended
+    SHELF_ROWS: 3,               // full rows of coins the platform starts with (plus a sparse fourth), piled against the back wall
     PERIOD: 4.5,                 // seconds for one back-and-forth
     SHELF_H: 22,                 // pusher shelf height above the playfield
     WALL_H: 70,                  // back wall height
-    CHUTE_Y: 72,                 // depth where a dropped coin lands (on the shelf when it's out, on the floor when it's back)
+    CHUTE_Y: 46,                 // depth where a dropped coin lands: always on top of the platform, like the real thing
     GUTTER_FROM: 0.72,           // side gutters are open from this fraction of depth to the ledge
     TRAY_DROP: 36,               // how far the ledge drops into the payout tray
 
@@ -225,14 +225,15 @@
     coins = [];
     shelfCoins = [];
     airCoins = [];
-    // the rows piled against the back wall: they stay put while the shelf slides under them,
-    // so any coin that lands in front of them gets shoved over the shelf's edge each stroke
-    for (var sr = 0; sr < CFG.SHELF_ROWS; sr++) {
-      var sy = R + sr * R2 * 0.96;
+    // a couple of rows already sitting on the platform against the back wall. Your coins land on the
+    // platform too; as it slides back, the wall holds the pack and the pack's front row creeps toward
+    // the platform's edge, so it takes several coins in one spot before one spills onto the pile below.
+    for (var sr = 0; sr <= CFG.SHELF_ROWS; sr++) {
+      var sy = R + sr * R2 * 0.9;
+      var density = sr < CFG.SHELF_ROWS ? 0.95 : 0.35;   // the last row is patchy: that's where your coins make the difference
       for (var sx = R + 1 + (sr % 2) * R; sx <= W - R - 1; sx += R2 * 1.01) {
-        var rc = makeCoin(sx + rnd(-0.6, 0.6), sy + rnd(-0.6, 0.6), 0, CFG.SHELF_H);
-        rc.resident = true;
-        shelfCoins.push(rc);
+        if (Math.random() > density) continue;
+        shelfCoins.push(makeCoin(sx + rnd(-0.6, 0.6), sy + rnd(-0.6, 0.6), 0, CFG.SHELF_H));
       }
     }
     target -= shelfCoins.length;
@@ -461,7 +462,6 @@
     for (i = 0; i < shelfCoins.length; i++) {
       c = shelfCoins[i];
       c.px = c.x; c.py = c.y; c.ov = 0;
-      if (c.resident) { c.vx = c.vy = 0; continue; }   // pinned against the back wall
       c.y += pdy;                 // rides with the shelf
       if (c.y < c.r) c.y = c.r;   // ...until the back wall holds it and the shelf slides out from under
       c.x += c.vx; c.y += c.vy;
@@ -493,16 +493,14 @@
       }
       for (i = 0; i < shelfCoins.length; i++) {
         c = shelfCoins[i];
-        if (c.resident) { c.x = c.px; c.y = c.py; continue; }   // immovable
         if (c.y < c.r) c.y = c.r;
         if (c.x < c.r) c.x = c.r; else if (c.x > W - c.r) c.x = W - c.r;
       }
     }
-    // anything hanging more than halfway over the shelf's front edge tips onto the pile
-    // (the resident rows live against the back wall and stay put; they're what shoves your coins off)
+    // anything hanging more than halfway over the platform's front edge tips onto the pile below
     for (i = shelfCoins.length - 1; i >= 0; i--) {
       c = shelfCoins[i];
-      if (!c.resident && c.y > front + c.r * 0.15) {
+      if (c.y > front + c.r * 0.15) {
         shelfCoins.splice(i, 1);
         if (settling) lastSettleEvent = frame;
         c.y += c.r * 0.6;
@@ -1463,7 +1461,7 @@
         stackInFlight: airCoins.length,
         t: pusher.t,
         coins: coins.map(pack),
-        shelf: shelfCoins.map(function (c) { return [Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, c.resident ? 1 : 0, Math.round(c.r * 100) / 100, Math.round(c.tip * 100) / 100]; }),
+        shelf: shelfCoins.map(function (c) { return [Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, 0, Math.round(c.r * 100) / 100, Math.round(c.tip * 100) / 100]; }),
         gifts: gifts.map(function (gf) { return [gf.kind, Math.round(gf.x * 10) / 10, Math.round(gf.y * 10) / 10, gf.layer]; }),
         giftRespawnIn: giftRespawnAt ? Math.max(0, giftRespawnAt - frame) : 0
       };
@@ -1491,7 +1489,7 @@
       giftAnims = [];
       giftRespawnAt = data.giftRespawnIn ? frame + data.giftRespawnIn : (gifts.length ? 0 : frame + 60 * 5);
       coins = data.coins.map(function (a) { return makeCoin(a[0], a[1], clamp(a[2] | 0, 0, CFG.MAX_LAYERS - 1), null, a[3], a[4]); });
-      shelfCoins = (data.shelf || []).map(function (a) { var c = makeCoin(a[0], a[1], 0, CFG.SHELF_H, a[3], a[4]); if (a[2] === 1) c.resident = true; return c; });
+      shelfCoins = (data.shelf || []).map(function (a) { return makeCoin(a[0], a[1], 0, CFG.SHELF_H, a[3], a[4]); });
       airCoins = [];
       if (typeof data.t === 'number') pusher.t = data.t;
       pusher.prevFront = pusher.front = CFG.P_MIN + (pusher.reach - CFG.P_MIN) * (0.5 - 0.5 * Math.cos((pusher.t % CFG.PERIOD) / CFG.PERIOD * Math.PI * 2));
@@ -1624,7 +1622,6 @@
     }
     for (i = 0; i < shelfCoins.length; i++) {
       c = shelfCoins[i];
-      if (c.resident) continue;
       c.vx += rnd(-2, 2);
       c.vy += rnd(-1, 1.5);
       if (Math.random() < 0.4) c.vz = 1 + Math.random();
